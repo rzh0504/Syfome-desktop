@@ -556,12 +556,29 @@
         <div v-if="webdavEntries.length > 0" class="webdav-browser">
           <div class="webdav-browser-header">
             <span>{{ webdavCurrentPath }}</span>
-            <button
-              v-if="webdavCurrentPath !== '/'"
-              @click="browseWebdavParent"
-            >
-              返回上级
-            </button>
+            <div class="webdav-browser-actions">
+              <button @click="indexCurrentWebdavDirectory">
+                索引当前目录音频
+              </button>
+              <button
+                :disabled="webdavScan.running"
+                @click="scanCurrentWebdavDirectory"
+              >
+                {{ webdavScan.running ? '扫描中...' : '递归扫描当前目录' }}
+              </button>
+              <button
+                v-if="webdavCurrentPath !== '/'"
+                @click="browseWebdavParent"
+              >
+                返回上级
+              </button>
+            </div>
+          </div>
+          <div v-if="webdavScan.started" class="webdav-scan-status">
+            <span>目录：{{ webdavScan.directories }}</span>
+            <span>音频：{{ webdavScan.audio }}</span>
+            <span>失败：{{ webdavScan.failed }}</span>
+            <span>{{ webdavScan.currentPath }}</span>
           </div>
           <div class="webdav-entry-list">
             <button
@@ -734,6 +751,14 @@ export default {
       webdavEntries: [],
       webdavError: '',
       webdavLoading: false,
+      webdavScan: {
+        started: false,
+        running: false,
+        directories: 0,
+        audio: 0,
+        failed: 0,
+        currentPath: '',
+      },
     };
   },
   computed: {
@@ -1207,6 +1232,67 @@ export default {
           this.webdavLoading = false;
         });
     },
+    indexCurrentWebdavDirectory() {
+      const webdavProvider = getProvider('webdav');
+      const audioEntries = this.webdavEntries.filter(entry => entry.isAudio);
+      if (audioEntries.length === 0) {
+        this.showToast('当前目录没有可索引的音频文件');
+        return;
+      }
+
+      return webdavProvider
+        .indexDirectoryTracks(
+          this.getWebdavRequestParams(this.webdavCurrentPath),
+          audioEntries
+        )
+        .then(tracks => {
+          this.showToast(`已索引 ${tracks.length} 首 WebDAV 音频`);
+        })
+        .catch(error => {
+          this.webdavError = `索引失败：${error.message || error}`;
+        });
+    },
+    scanCurrentWebdavDirectory() {
+      const webdavProvider = getProvider('webdav');
+      this.webdavError = '';
+      this.webdavScan = {
+        started: true,
+        running: true,
+        directories: 0,
+        audio: 0,
+        failed: 0,
+        currentPath: this.webdavCurrentPath,
+      };
+
+      return webdavProvider
+        .scanDirectory(this.getWebdavRequestParams(this.webdavCurrentPath), {
+          onProgress: progress => {
+            this.webdavScan = {
+              started: true,
+              running: true,
+              directories: progress.directories,
+              audio: progress.audio,
+              failed: progress.failed,
+              currentPath: progress.currentPath,
+            };
+          },
+        })
+        .then(stats => {
+          this.webdavScan = {
+            started: true,
+            running: false,
+            directories: stats.directories,
+            audio: stats.audio,
+            failed: stats.failed,
+            currentPath: this.webdavCurrentPath,
+          };
+          this.showToast(`递归扫描完成，已索引 ${stats.audio} 首音频`);
+        })
+        .catch(error => {
+          this.webdavScan.running = false;
+          this.webdavError = `递归扫描失败：${error.message || error}`;
+        });
+    },
     getAllOutputDevices() {
       navigator.mediaDevices.enumerateDevices().then(devices => {
         this.allOutputDevices = devices.filter(device => {
@@ -1589,6 +1675,18 @@ input[type='number'] {
 .webdav-browser-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.webdav-scan-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.72;
 }
 
 .webdav-entry-list {

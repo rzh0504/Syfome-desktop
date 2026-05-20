@@ -107,6 +107,56 @@ export function indexDirectoryTracks(params, entries = []) {
   return cacheWebdavTracks(sourceKey, parentPath, tracks).then(() => tracks);
 }
 
+export async function scanDirectory(params, { onProgress } = {}) {
+  const visited = new Set();
+  const stats = {
+    directories: 0,
+    audio: 0,
+    failed: 0,
+    tracks: [],
+  };
+
+  async function scan(path) {
+    const normalizedPath = normalizeWebdavPath(path);
+    if (visited.has(normalizedPath)) return;
+    visited.add(normalizedPath);
+    stats.directories += 1;
+    onProgress?.({ ...stats, currentPath: normalizedPath });
+
+    let entries = [];
+    try {
+      entries = await browseDirectory({
+        ...params,
+        path: normalizedPath,
+      });
+    } catch (error) {
+      stats.failed += 1;
+      onProgress?.({ ...stats, currentPath: normalizedPath, error });
+      return;
+    }
+
+    const tracks = await indexDirectoryTracks(
+      {
+        ...params,
+        path: normalizedPath,
+      },
+      entries
+    );
+    stats.audio += tracks.length;
+    stats.tracks.push(...tracks);
+    onProgress?.({ ...stats, currentPath: normalizedPath });
+
+    for (const entry of entries) {
+      if (entry.isDirectory) {
+        await scan(entry.path);
+      }
+    }
+  }
+
+  await scan(params?.path || '/');
+  return stats;
+}
+
 export function getSongDetails(ids) {
   return getWebdavTracksByIds(ids).then(songs => ({
     songs,
