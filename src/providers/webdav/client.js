@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { withAudioMetadata } from './audio';
 
 const DEFAULT_TIMEOUT = 15000;
 
@@ -21,6 +22,10 @@ export function joinWebdavUrl(serverUrl, path = '/') {
   return `${normalizedServerUrl}${
     normalizedPath === '/' ? '' : normalizedPath
   }`;
+}
+
+export function buildWebdavSourceKey({ serverUrl, username } = {}) {
+  return `webdav:${normalizeWebdavUrl(serverUrl)}:${username || ''}`;
 }
 
 function buildAuthHeader({ username, password } = {}) {
@@ -155,7 +160,7 @@ export function parsePropfindResponse(
       );
       const name = path === '/' ? '/' : path.split('/').filter(Boolean).pop();
 
-      return {
+      return withAudioMetadata({
         href,
         path,
         name,
@@ -164,7 +169,7 @@ export function parsePropfindResponse(
         contentType: getNodeText(response, 'getcontenttype'),
         etag: getNodeText(response, 'getetag'),
         lastModified: parseWebdavDate(getNodeText(response, 'getlastmodified')),
-      };
+      });
     })
     .filter(item => item.path !== basePath);
 }

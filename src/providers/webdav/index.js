@@ -1,9 +1,14 @@
 import {
+  buildWebdavSourceKey,
   listDirectory,
   normalizeWebdavPath,
   normalizeWebdavUrl,
   testConnection,
 } from './client';
+import {
+  cacheWebdavDirectoryEntries,
+  getCachedWebdavDirectoryEntries,
+} from '@/utils/db';
 
 export const key = 'webdav';
 
@@ -61,7 +66,19 @@ export function getLibrarySongs() {
 }
 
 export function browseDirectory(params) {
-  return listDirectory(params);
+  const sourceKey = buildWebdavSourceKey(params);
+  const parentPath = normalizeWebdavPath(params?.path || '/');
+  return listDirectory(params)
+    .then(entries => {
+      cacheWebdavDirectoryEntries(sourceKey, parentPath, entries);
+      return entries;
+    })
+    .catch(error =>
+      getCachedWebdavDirectoryEntries(sourceKey, parentPath).then(entries => {
+        if (entries.length > 0) return entries;
+        throw error;
+      })
+    );
 }
 
 export function getSongDetails() {

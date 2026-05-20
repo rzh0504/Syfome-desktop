@@ -11,6 +11,15 @@ db.version(4).stores({
   album: '&id, updateTime',
 });
 
+db.version(5).stores({
+  trackSources: '&id, createTime',
+  trackDetail: '&id, updateTime',
+  lyric: '&id, updateTime',
+  album: '&id, updateTime',
+  webdavEntries:
+    '&id, sourceKey, parentPath, [sourceKey+parentPath], path, isDirectory, updatedAt',
+});
+
 db.version(3)
   .stores({
     trackSources: '&id, createTime',
@@ -204,4 +213,59 @@ export function clearDB() {
     });
     resolve();
   });
+}
+
+export function cacheWebdavDirectoryEntries(
+  sourceKey,
+  parentPath,
+  entries = []
+) {
+  if (!sourceKey || !parentPath) return Promise.resolve([]);
+  const normalizedParentPath = normalizePath(parentPath);
+  const updatedAt = Date.now();
+  const records = entries.map(entry => ({
+    ...entry,
+    id: `${sourceKey}:${entry.path}`,
+    sourceKey,
+    parentPath: normalizedParentPath,
+    updatedAt,
+  }));
+
+  return db.transaction('rw', db.webdavEntries, async () => {
+    await db.webdavEntries
+      .where('[sourceKey+parentPath]')
+      .equals([sourceKey, normalizedParentPath])
+      .delete()
+      .catch(() =>
+        db.webdavEntries
+          .where('sourceKey')
+          .equals(sourceKey)
+          .filter(entry => entry.parentPath === normalizedParentPath)
+          .delete()
+      );
+    await db.webdavEntries.bulkPut(records);
+    return records;
+  });
+}
+
+export function getCachedWebdavDirectoryEntries(sourceKey, parentPath) {
+  if (!sourceKey || !parentPath) return Promise.resolve([]);
+  const normalizedParentPath = normalizePath(parentPath);
+  return db.webdavEntries
+    .where('sourceKey')
+    .equals(sourceKey)
+    .filter(entry => entry.parentPath === normalizedParentPath)
+    .sortBy('name')
+    .then(entries =>
+      entries.sort((a, b) => {
+        if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      })
+    );
+}
+
+function normalizePath(path) {
+  const input = String(path || '/').trim();
+  if (!input || input === '/') return '/';
+  return `/${input.replace(/^\/+|\/+$/g, '')}`;
 }
