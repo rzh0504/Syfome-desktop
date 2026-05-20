@@ -26,6 +26,19 @@ export default {
   updateData(state, { key, value }) {
     state.data[key] = value;
   },
+  setActiveProvider(state, provider) {
+    state.data.activeProvider = provider;
+  },
+  upsertSource(state, source) {
+    const sources = state.data.sources || {};
+    state.data.sources = {
+      ...sources,
+      [source.key]: {
+        ...(sources[source.key] || {}),
+        ...source,
+      },
+    };
+  },
   togglePlaylistCategory(state, name) {
     const index = state.settings.enabledPlaylistCategories.findIndex(
       c => c === name

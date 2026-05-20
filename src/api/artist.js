@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 
 /**
  * 获取歌手单曲
@@ -6,7 +6,7 @@ import { navidromeProvider } from '@/providers';
  * @param {number} id - 歌手 id, 可由搜索接口获得
  */
 export function getArtist(id) {
-  return navidromeProvider.getArtistDetail(id);
+  return getActiveProvider().getArtistDetail(id);
 }
 
 /**
@@ -21,7 +21,7 @@ export function getArtist(id) {
  * @param {number=} params.offset
  */
 export function getArtistAlbum(params) {
-  return navidromeProvider.getArtistAlbums(params.id, params.limit);
+  return getActiveProvider().getArtistAlbums(params.id, params.limit);
 }
 
 /**
@@ -58,7 +58,7 @@ export function artistMv() {
  * @param {number} params.t
  */
 export function followAArtist(params) {
-  return navidromeProvider.starArtist(params.id, Number(params.t) === 1);
+  return getActiveProvider().starArtist(params.id, Number(params.t) === 1);
 }
 
 /**

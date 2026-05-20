@@ -91,7 +91,7 @@ export default {
     };
   },
   methods: {
-    ...mapMutations(['updateData']),
+    ...mapMutations(['setActiveProvider', 'updateData', 'upsertSource']),
     login() {
       if (!this.server || !this.username || !this.password) {
         nativeAlert('请填写服务器地址、用户名和密码');
@@ -117,6 +117,15 @@ export default {
       }
       if (data.code === 200) {
         localStorage.setItem('navidromeServer', this.server.trim());
+        this.upsertSource({
+          key: 'navidrome',
+          name: 'Navidrome',
+          provider: 'navidrome',
+          enabled: true,
+          serverUrl: this.server.trim(),
+          username: this.username.trim(),
+        });
+        this.setActiveProvider('navidrome');
         this.updateData({ key: 'loginMode', value: 'account' });
         this.updateData({ key: 'user', value: data.profile || {} });
         this.$store.dispatch('fetchUserProfile').then(() => {

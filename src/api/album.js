@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 import { cacheAlbum, getAlbumFromCache } from '@/utils/db';
 
 /**
@@ -8,10 +8,12 @@ import { cacheAlbum, getAlbumFromCache } from '@/utils/db';
  */
 export function getAlbum(id) {
   const fetchLatest = () => {
-    return navidromeProvider.getAlbumDetail(id).then(data => {
-      cacheAlbum(id, data);
-      return data;
-    });
+    return getActiveProvider()
+      .getAlbumDetail(id)
+      .then(data => {
+        cacheAlbum(id, data);
+        return data;
+      });
   };
   fetchLatest();
 
@@ -60,5 +62,5 @@ export function albumDynamicDetail() {
  * @param {number} params.t
  */
 export function likeAAlbum(params) {
-  return navidromeProvider.starAlbum(params.id, Number(params.t) === 1);
+  return getActiveProvider().starAlbum(params.id, Number(params.t) === 1);
 }

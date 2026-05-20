@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 
 /**
  * 手机登录
@@ -46,7 +46,7 @@ export function loginWithEmail(params) {
  * @param {string} params.password
  */
 export async function loginWithAccount(params) {
-  const result = await navidromeProvider.login({
+  const result = await getActiveProvider().login({
     serverUrl: params.server,
     username: params.username,
     password: params.password,
@@ -100,5 +100,5 @@ export function refreshCookie() {
  * 说明 : 调用此接口 , 可退出登录
  */
 export function logout() {
-  return navidromeProvider.logout();
+  return getActiveProvider().logout();
 }

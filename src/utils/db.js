@@ -30,6 +30,13 @@ db.version(1).stores({
 
 let tracksCacheBytes = 0;
 
+function getTrackCacheKey(track) {
+  if (track && typeof track === 'object') {
+    return track.uid || track.cacheKey || track.id;
+  }
+  return track;
+}
+
 async function deleteExcessCache() {
   if (
     store.state.settings.cacheLimit === false ||
@@ -52,6 +59,8 @@ async function deleteExcessCache() {
 
 export function cacheTrackSource(trackInfo, url, bitRate, from = 'navidrome') {
   if (!process.env.IS_ELECTRON) return;
+  const cacheKey = getTrackCacheKey(trackInfo);
+  if (!cacheKey) return;
   const name = trackInfo.name;
   const artist =
     (trackInfo.ar && trackInfo.ar[0]?.name) ||
@@ -73,10 +82,11 @@ export function cacheTrackSource(trackInfo, url, bitRate, from = 'navidrome') {
     })
     .then(response => {
       db.trackSources.put({
-        id: trackInfo.id,
+        id: cacheKey,
+        sourceId: trackInfo.sourceId || trackInfo.id,
         source: response.data,
         bitRate,
-        from,
+        from: trackInfo.source || from,
         name,
         artist,
         createTime: new Date().getTime(),
@@ -89,14 +99,23 @@ export function cacheTrackSource(trackInfo, url, bitRate, from = 'navidrome') {
 }
 
 export function getTrackSource(id) {
-  return db.trackSources.get(id).then(track => {
+  const cacheKey = getTrackCacheKey(id);
+  const legacyKey = id && typeof id === 'object' ? id.id : id;
+
+  if (cacheKey === undefined || cacheKey === null) {
+    return Promise.resolve(undefined);
+  }
+
+  return db.trackSources.get(cacheKey).then(track => {
     if (track) {
       console.debug(
         `[debug][db.js] get track from cache 👉 ${track.name} by ${track.artist}`
       );
       return track;
     }
-    return db.trackSources.get(String(id));
+
+    if (legacyKey === undefined || legacyKey === null) return undefined;
+    return db.trackSources.get(String(legacyKey));
   });
 }
 

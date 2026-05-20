@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 
 /**
  * 推荐歌单
@@ -9,9 +9,11 @@ import { navidromeProvider } from '@/providers';
  * @param {number=} params.limit
  */
 export function recommendPlaylist(params) {
-  return navidromeProvider.getPlaylistList().then(playlists => ({
-    result: playlists.slice(0, params?.limit || 30),
-  }));
+  return getActiveProvider()
+    .getPlaylistList()
+    .then(playlists => ({
+      result: playlists.slice(0, params?.limit || 30),
+    }));
 }
 /**
  * 获取每日推荐歌单
@@ -33,10 +35,12 @@ export function dailyRecommendPlaylist() {
  * @param {boolean=} noCache
  */
 export function getPlaylistDetail(id) {
-  return navidromeProvider.getPlaylistDetail(id).then(playlist => ({
-    playlist,
-    privileges: playlist.tracks.map(track => ({ id: track.id, pl: 320000 })),
-  }));
+  return getActiveProvider()
+    .getPlaylistDetail(id)
+    .then(playlist => ({
+      playlist,
+      privileges: playlist.tracks.map(track => ({ id: track.id, pl: 320000 })),
+    }));
 }
 /**
  * 获取精品歌单
@@ -50,10 +54,12 @@ export function getPlaylistDetail(id) {
  * @param {number} params.before
  */
 export function highQualityPlaylist() {
-  return navidromeProvider.getPlaylistList().then(playlists => ({
-    playlists,
-    more: false,
-  }));
+  return getActiveProvider()
+    .getPlaylistList()
+    .then(playlists => ({
+      playlists,
+      more: false,
+    }));
 }
 
 /**
@@ -68,10 +74,12 @@ export function highQualityPlaylist() {
  * @param {number=} params.limit
  */
 export function topPlaylist() {
-  return navidromeProvider.getPlaylistList().then(playlists => ({
-    playlists,
-    more: false,
-  }));
+  return getActiveProvider()
+    .getPlaylistList()
+    .then(playlists => ({
+      playlists,
+      more: false,
+    }));
 }
 
 /**
@@ -110,7 +118,7 @@ export function subscribePlaylist() {
  *  * @param {number} id
  */
 export function deletePlaylist(id) {
-  return navidromeProvider.deletePlaylist(id);
+  return getActiveProvider().deletePlaylist(id);
 }
 
 /**
@@ -125,7 +133,7 @@ export function deletePlaylist(id) {
  * @param {string} params.type
  */
 export function createPlaylist(params) {
-  return navidromeProvider.createPlaylist(params.name);
+  return getActiveProvider().createPlaylist(params.name);
 }
 
 /**
@@ -138,7 +146,7 @@ export function createPlaylist(params) {
  * @param {string} params.pid
  */
 export function addOrRemoveTrackFromPlaylist(params) {
-  return navidromeProvider.updatePlaylistTracks(params);
+  return getActiveProvider().updatePlaylistTracks(params);
 }
 
 /**

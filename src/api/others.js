@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 
 /**
  * 搜索
@@ -16,7 +16,7 @@ import { navidromeProvider } from '@/providers';
  * @param {number=} params.type
  */
 export function search(params) {
-  return navidromeProvider.searchAll(params);
+  return getActiveProvider().searchAll(params);
 }
 
 export function personalFM() {
@@ -32,7 +32,7 @@ export function fmTrash() {
  * @param {number=} limit
  */
 export function homeRecommendTracks(limit = 24) {
-  return navidromeProvider
+  return getActiveProvider()
     .getRandomSongs(limit)
     .then(songs => ({ songs }))
     .catch(() => ({ songs: [] }));
@@ -47,7 +47,7 @@ export function homeRecommendTracks(limit = 24) {
  */
 export function homeAlbumsByType(params = {}) {
   const { type = 'random', limit = 24, offset = 0 } = params;
-  return navidromeProvider
+  return getActiveProvider()
     .getAlbumListByType({ type, size: limit, offset })
     .then(albums => ({
       albums,
@@ -60,7 +60,7 @@ export function homeAlbumsByType(params = {}) {
  * 首页：全部艺人（前端自行随机/分页）
  */
 export function homeAllArtists() {
-  return navidromeProvider
+  return getActiveProvider()
     .getAllArtists()
     .then(artists => ({ artists }))
     .catch(() => ({ artists: [] }));

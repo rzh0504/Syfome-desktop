@@ -36,6 +36,15 @@ let localStorage = {
     likedSongPlaylistID: 0,
     lastRefreshCookieDate: 0,
     loginMode: null,
+    activeProvider: 'navidrome',
+    sources: {
+      navidrome: {
+        key: 'navidrome',
+        name: 'Navidrome',
+        provider: 'navidrome',
+        enabled: true,
+      },
+    },
   },
 };
 

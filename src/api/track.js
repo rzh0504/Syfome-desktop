@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 import {
   cacheTrackDetail,
   getTrackDetailFromCache,
@@ -13,7 +13,7 @@ import {
  * @param {string} id - 音乐的 id，例如 id=405998841,33894312
  */
 export function getMP3(id) {
-  return navidromeProvider
+  return getActiveProvider()
     .getSongDetails(id)
     .then(result => {
       const song = result.songs[0];
@@ -38,13 +38,15 @@ export function getMP3(id) {
  */
 export function getTrackDetail(ids) {
   const fetchLatest = () => {
-    return navidromeProvider.getSongDetails(ids).then(data => {
-      data.songs.map(song => {
-        const privileges = data.privileges.find(t => t.id === song.id);
-        cacheTrackDetail(song, privileges);
+    return getActiveProvider()
+      .getSongDetails(ids)
+      .then(data => {
+        data.songs.map(song => {
+          const privileges = data.privileges.find(t => t.id === song.id);
+          cacheTrackDetail(song, privileges);
+        });
+        return data;
       });
-      return data;
-    });
   };
   fetchLatest();
 
@@ -65,10 +67,12 @@ export function getTrackDetail(ids) {
  */
 export function getLyric(id) {
   const fetchLatest = () => {
-    return navidromeProvider.getLyrics(id).then(result => {
-      cacheLyric(id, result);
-      return result;
-    });
+    return getActiveProvider()
+      .getLyrics(id)
+      .then(result => {
+        cacheLyric(id, result);
+        return result;
+      });
   };
 
   fetchLatest();
@@ -86,7 +90,7 @@ export function getLyric(id) {
  */
 export function getLibrarySongs(params = {}) {
   const { offset = 0, limit = 100 } = params;
-  return navidromeProvider.getLibrarySongs({ offset, limit });
+  return getActiveProvider().getLibrarySongs({ offset, limit });
 }
 
 /**
@@ -108,7 +112,7 @@ export function topSong() {
  * @param {boolean=} [params.like]
  */
 export function likeATrack(params) {
-  return navidromeProvider.starSong(params.id, params.like !== false);
+  return getActiveProvider().starSong(params.id, params.like !== false);
 }
 
 /**
@@ -123,7 +127,7 @@ export function likeATrack(params) {
  * @param {number=} params.time
  */
 export function scrobble(params) {
-  return navidromeProvider.scrobbleSong({
+  return getActiveProvider().scrobbleSong({
     id: params.id,
     time: params.time,
     submission: true,

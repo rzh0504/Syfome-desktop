@@ -355,8 +355,8 @@ export default class {
 
     return source;
   }
-  _getAudioSourceFromCache(id) {
-    return getTrackSource(id).then(t => {
+  _getAudioSourceFromCache(track) {
+    return getTrackSource(track).then(t => {
       if (!t) return null;
       return this._getAudioSourceBlobURL(t.source);
     });
@@ -381,7 +381,7 @@ export default class {
     return null;
   }
   _getAudioSource(track) {
-    return this._getAudioSourceFromCache(String(track.id))
+    return this._getAudioSourceFromCache(track)
       .then(source => {
         return source ?? this._getAudioSourceFromServer(track);
       })

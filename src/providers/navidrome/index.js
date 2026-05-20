@@ -14,6 +14,19 @@ import {
   mapSong,
 } from './mappers';
 
+export const key = 'navidrome';
+
+export const name = 'Navidrome';
+
+export const capabilities = {
+  canBrowseFiles: false,
+  canLocalIndex: false,
+  canScrobble: true,
+  canServerPlaylist: true,
+  canStar: true,
+  requiresLocalIndex: false,
+};
+
 async function getSongsByAlbumIds(albumIds = []) {
   const unique = [...new Set(albumIds)].filter(Boolean).slice(0, 6);
   if (unique.length === 0) return [];

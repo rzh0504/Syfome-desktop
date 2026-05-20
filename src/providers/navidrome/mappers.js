@@ -1,8 +1,18 @@
 import { buildCoverArtUrl, buildStreamUrl } from './client';
 
+const SOURCE = 'navidrome';
+
+function sourceUid(type, id) {
+  return id ? `${SOURCE}:${type}:${id}` : '';
+}
+
 export function mapArtist(raw = {}) {
   return {
     id: raw.id,
+    uid: sourceUid('artist', raw.id),
+    source: SOURCE,
+    sourceId: raw.id,
+    sourceType: SOURCE,
     name: raw.name || 'Unknown Artist',
     img1v1Url: buildCoverArtUrl(raw.coverArt, 1024),
     briefDesc: '',
@@ -21,6 +31,10 @@ export function mapAlbum(raw = {}) {
 
   return {
     id: raw.id,
+    uid: sourceUid('album', raw.id),
+    source: SOURCE,
+    sourceId: raw.id,
+    sourceType: SOURCE,
     name: raw.name || raw.title || 'Unknown Album',
     picUrl: buildCoverArtUrl(raw.coverArt, 1024),
     artist: {
@@ -66,6 +80,10 @@ export function mapSong(raw = {}) {
 
   return {
     id: raw.id,
+    uid: sourceUid('song', raw.id),
+    source: SOURCE,
+    sourceId: raw.id,
+    sourceType: SOURCE,
     name: raw.title || raw.name || 'Unknown Track',
     dt: durationInMs,
     no: raw.track || 0,
@@ -97,6 +115,10 @@ export function mapPlaylist(raw = {}) {
 
   return {
     id: raw.id,
+    uid: sourceUid('playlist', raw.id),
+    source: SOURCE,
+    sourceId: raw.id,
+    sourceType: SOURCE,
     name: raw.name || 'Untitled Playlist',
     coverImgUrl:
       entries[0]?.al?.picUrl ||

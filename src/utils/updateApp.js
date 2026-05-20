@@ -33,7 +33,12 @@ const updateSetting = () => {
 const updateData = () => {
   const parsedData = JSON.parse(localStorage.getItem('data'));
   const data = {
+    ...initLocalStorage.data,
     ...parsedData,
+    sources: {
+      ...initLocalStorage.data.sources,
+      ...(parsedData?.sources || {}),
+    },
   };
   localStorage.setItem('data', JSON.stringify(data));
 };

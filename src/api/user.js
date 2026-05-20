@@ -1,4 +1,4 @@
-import { navidromeProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 
 /**
  * 获取用户详情
@@ -7,7 +7,9 @@ import { navidromeProvider } from '@/providers';
  * @param {number} uid
  */
 export function userDetail() {
-  return navidromeProvider.getProfile().then(profile => ({ profile }));
+  return getActiveProvider()
+    .getProfile()
+    .then(profile => ({ profile }));
 }
 
 /**
@@ -15,7 +17,7 @@ export function userDetail() {
  * 说明 : 登录后调用此接口 ,可获取用户账号信息
  */
 export function userAccount() {
-  return navidromeProvider
+  return getActiveProvider()
     .getProfile()
     .then(profile => ({ code: 200, profile }));
 }
@@ -32,7 +34,9 @@ export function userAccount() {
  * @param {number=} params.offset
  */
 export function userPlaylist() {
-  return navidromeProvider.getPlaylistList().then(playlist => ({ playlist }));
+  return getActiveProvider()
+    .getPlaylistList()
+    .then(playlist => ({ playlist }));
 }
 
 /**
@@ -55,9 +59,11 @@ export function userPlayHistory() {
  * @param {number} uid
  */
 export function userLikedSongsIDs() {
-  return navidromeProvider.getStarred().then(starred => ({
-    ids: starred.songs.map(song => song.id),
-  }));
+  return getActiveProvider()
+    .getStarred()
+    .then(starred => ({
+      ids: starred.songs.map(song => song.id),
+    }));
 }
 
 /**
@@ -80,7 +86,7 @@ export function dailySignin() {
  * @param {number=} params.offset
  */
 export function likedAlbums() {
-  return navidromeProvider
+  return getActiveProvider()
     .getStarred()
     .then(starred => ({ data: starred.albums }));
 }
@@ -90,7 +96,7 @@ export function likedAlbums() {
  * 说明 : 调用此接口可获取到用户收藏的歌手
  */
 export function likedArtists() {
-  return navidromeProvider
+  return getActiveProvider()
     .getStarred()
     .then(starred => ({ data: starred.artists }));
 }
