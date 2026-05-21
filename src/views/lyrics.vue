@@ -314,6 +314,7 @@ import Color from 'color';
 import { isAccountLoggedIn } from '@/utils/auth';
 import { hasListSource, getListSourcePath } from '@/utils/playList';
 import locale from '@/locale';
+import { resizeImageUrl } from '@/utils/image';
 
 export default {
   name: 'Lyrics',
@@ -351,10 +352,10 @@ export default {
       },
     },
     imageUrl() {
-      return this.player.currentTrack?.al?.picUrl + '?param=1024y1024';
+      return resizeImageUrl(this.player.currentTrack?.al?.picUrl, 1024);
     },
     bgImageUrl() {
-      return this.player.currentTrack?.al?.picUrl + '?param=512y512';
+      return resizeImageUrl(this.player.currentTrack?.al?.picUrl, 512);
     },
     isShowLyricTypeSwitch() {
       return this.romalyric.length > 0 && this.tlyric.length > 0;
@@ -656,7 +657,8 @@ export default {
     },
     getCoverColor() {
       if (this.settings.lyricsBackground !== true) return;
-      const cover = this.currentTrack.al?.picUrl + '?param=256y256';
+      const cover = resizeImageUrl(this.currentTrack.al?.picUrl, 256);
+      if (!cover) return;
       Vibrant.from(cover, { colorCount: 1 })
         .getPalette()
         .then(palette => {

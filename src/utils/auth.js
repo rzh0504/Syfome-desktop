@@ -33,12 +33,14 @@ export function isUsernameLoggedIn() {
 
 // 账户登录或者用户名搜索都判断为登录，宽松检查
 export function isLooseLoggedIn() {
-  return isLoggedIn() || Boolean(store.state.data.sources?.webdav?.enabled);
+  return isLoggedIn();
 }
 
 export function doLogout() {
   logout();
   clearSession();
+  store.commit('setActiveProvider', 'navidrome');
+
   // 更新状态仓库中的用户信息
   store.commit('updateData', { key: 'user', value: {} });
   // 更新状态仓库中的登录状态

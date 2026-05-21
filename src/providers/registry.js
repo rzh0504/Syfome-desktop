@@ -1,11 +1,9 @@
 import * as navidromeProvider from './navidrome';
-import * as webdavProvider from './webdav';
 
 const DEFAULT_PROVIDER_KEY = 'navidrome';
 
 const providers = {
   navidrome: navidromeProvider,
-  webdav: webdavProvider,
 };
 
 let activeProviderKey = readActiveProviderKey();

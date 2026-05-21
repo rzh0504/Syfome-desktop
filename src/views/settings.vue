@@ -5,7 +5,10 @@
         <div class="left">
           <img class="avatar" :src="data.user.avatarUrl" loading="lazy" />
           <div class="info">
-            <div class="nickname">{{ data.user.nickname }}</div>
+            <div class="nickname">
+              {{ data.user.nickname }}
+              <span class="source-name">{{ currentSource.name }}</span>
+            </div>
             <div class="extra-info">
               <span v-if="data.user.vipType !== 0" class="vip"
                 ><img
@@ -15,11 +18,15 @@
                 />
                 <span class="text">黑胶VIP</span>
               </span>
-              <span v-else class="text">{{ data.user.signature }}</span>
+              <span class="text">{{ currentSource.description }}</span>
             </div>
           </div>
         </div>
         <div class="right">
+          <button @click="editCurrentSource"> 编辑 </button>
+          <button :disabled="refreshingLibrary" @click="refreshCurrentLibrary">
+            {{ refreshingLibrary ? '刷新中...' : '刷新媒体库' }}
+          </button>
           <button @click="logout">
             <svg-icon icon-class="logout" />
             {{ $t('settings.logout') }}
@@ -513,49 +520,6 @@
         </div>
       </div>
 
-      <div>
-        <h3>音乐源</h3>
-        <div class="source-list">
-          <div
-            v-for="source in configuredSources"
-            :key="source.key"
-            class="source-item"
-          >
-            <div class="left">
-              <div class="title">
-                {{ source.name }}
-                <span v-if="source.key === data.activeProvider">当前默认</span>
-              </div>
-              <div class="description">{{ source.description }}</div>
-            </div>
-            <div class="right">
-              <button
-                :disabled="
-                  source.key === data.activeProvider || !source.enabled
-                "
-                @click="changeActiveProvider(source.key)"
-              >
-                设为默认
-              </button>
-              <button
-                v-if="source.key !== 'navidrome'"
-                :disabled="!source.configured"
-                @click="toggleSourceEnabled(source.key)"
-              >
-                {{ source.enabled ? '禁用' : '启用' }}
-              </button>
-              <button
-                v-if="source.key !== 'navidrome'"
-                :disabled="!source.configured"
-                @click="deleteSource(source.key)"
-              >
-                删除
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div v-if="isElectron">
         <h3>快捷键</h3>
         <div class="item">
@@ -667,10 +631,7 @@ import { isLooseLoggedIn, doLogout } from '@/utils/auth';
 import { auth as lastfmAuth } from '@/api/lastfm';
 import { changeAppearance, bytesToSize } from '@/utils/common';
 import { countDBSize, clearDB } from '@/utils/db';
-import {
-  getProvider,
-  setActiveProvider as persistActiveProvider,
-} from '@/providers';
+import { getProvider } from '@/providers';
 import pkg from '../../package.json';
 
 const electron =
@@ -700,6 +661,7 @@ export default {
         recording: false,
       },
       recordedShortcut: [],
+      refreshingLibrary: false,
     };
   },
   computed: {
@@ -718,6 +680,15 @@ export default {
     },
     showUserInfo() {
       return isLooseLoggedIn() && this.data.user.nickname;
+    },
+    currentSource() {
+      const source = this.data.sources?.navidrome || {};
+      return {
+        key: 'navidrome',
+        name: 'Navidrome',
+        description: 'OpenSubsonic/Navidrome 服务器音乐库',
+        raw: source,
+      };
     },
     recordedShortcutComputed() {
       let shortcut = [];
@@ -1091,27 +1062,6 @@ export default {
         });
       },
     },
-    configuredSources() {
-      const sources = this.data.sources || {};
-      const webdavSource = sources.webdav;
-      return [
-        {
-          key: 'navidrome',
-          name: 'Navidrome',
-          enabled: true,
-          description: 'OpenSubsonic/Navidrome 服务器音乐库',
-        },
-        {
-          key: 'webdav',
-          name: 'WebDAV',
-          enabled: Boolean(webdavSource?.enabled),
-          configured: Boolean(webdavSource),
-          description: webdavSource?.enabled
-            ? '已连接 WebDAV 音乐源'
-            : '尚未连接 WebDAV 音乐源',
-        },
-      ];
-    },
     isLastfmConnected() {
       return this.lastfm && this.lastfm.key !== undefined;
     },
@@ -1126,41 +1076,39 @@ export default {
   },
   methods: {
     ...mapActions(['showToast']),
-    ...mapMutations(['removeSource', 'setActiveProvider', 'upsertSource']),
-    changeActiveProvider(key) {
-      persistActiveProvider(key);
-      this.setActiveProvider(key);
-      this.showToast(`已切换默认音乐源为 ${key}`);
-    },
-    toggleSourceEnabled(key) {
-      const source = this.data.sources?.[key];
-      if (!source) return;
-      const enabled = !source.enabled;
-      this.upsertSource({
-        ...source,
-        enabled,
+    ...mapMutations(['updateData']),
+    editCurrentSource() {
+      this.$router.push({
+        path: '/login/account',
+        query: {
+          source: this.currentSource.key,
+          edit: '1',
+        },
       });
-      if (!enabled && this.data.activeProvider === key) {
-        persistActiveProvider('navidrome');
-        this.setActiveProvider('navidrome');
-      }
-      this.showToast(`${source.name || key} 已${enabled ? '启用' : '禁用'}`);
     },
-    deleteSource(key) {
-      const source = this.data.sources?.[key];
-      if (!source) return;
-      if (!confirm(`确定删除 ${source.name || key} 音乐源？`)) return;
-
-      if (key === 'webdav') {
-        getProvider('webdav').forgetCredentials(source.sourceKey);
+    async refreshCurrentLibrary() {
+      if (this.refreshingLibrary) return;
+      const provider = getProvider(this.currentSource.key);
+      if (!provider?.refreshLibrary) {
+        this.showToast(`${this.currentSource.name} 不支持刷新媒体库`);
+        return;
       }
 
-      this.removeSource(key);
-      if (this.data.activeProvider === key) {
-        persistActiveProvider('navidrome');
-        this.setActiveProvider('navidrome');
+      this.refreshingLibrary = true;
+      try {
+        const result = await provider.refreshLibrary(this.currentSource.raw);
+        this.updateData({ key: 'librarySongsUpdatedAt', value: Date.now() });
+        const count = result?.audio ?? result?.count;
+        this.refreshingLibrary = false;
+        this.showToast(
+          count !== undefined
+            ? `已刷新媒体库，读取 ${count} 首歌曲`
+            : '已开始刷新媒体库'
+        );
+      } catch (error) {
+        this.refreshingLibrary = false;
+        this.showToast(`刷新媒体库失败：${error.message || error}`);
       }
-      this.showToast(`${source.name || key} 音乐源已删除`);
     },
     getAllOutputDevices() {
       navigator.mediaDevices.enumerateDevices().then(devices => {
@@ -1365,6 +1313,15 @@ h3 {
       font-size: 20px;
       font-weight: 600;
       margin-bottom: 2px;
+    }
+    .source-name {
+      margin-left: 8px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: var(--color-primary);
+      background: var(--color-primary-bg);
+      font-size: 12px;
+      vertical-align: 2px;
     }
     .extra-info {
       font-size: 13px;

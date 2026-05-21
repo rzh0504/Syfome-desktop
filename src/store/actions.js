@@ -29,31 +29,12 @@ export default {
     });
   },
   likeATrack({ state, commit, dispatch }, id) {
-    const isLocalTrack = String(id).startsWith('webdav:');
-    if (!isLocalTrack && !isAccountLoggedIn()) {
+    if (!isAccountLoggedIn()) {
       dispatch('showToast', '请先登录 Navidrome 账号');
       return;
     }
     let like = true;
     if (state.liked.songs.includes(id)) like = false;
-
-    if (isLocalTrack) {
-      const localLikedSongIds = like
-        ? [...(state.data.localLikedSongIds || []), id]
-        : (state.data.localLikedSongIds || []).filter(d => d !== id);
-      commit('updateData', {
-        key: 'localLikedSongIds',
-        value: [...new Set(localLikedSongIds)],
-      });
-      commit('updateLikedXXX', {
-        name: 'songs',
-        data: like
-          ? [...new Set([...state.liked.songs, id])]
-          : state.liked.songs.filter(d => d !== id),
-      });
-      dispatch('fetchLikedSongsWithDetails');
-      return;
-    }
 
     likeATrack({ id, like })
       .then(() => {
@@ -77,11 +58,10 @@ export default {
       });
   },
   fetchLikedSongs: ({ state, commit }) => {
-    const localLikedSongIds = state.data.localLikedSongIds || [];
     if (!isLooseLoggedIn()) {
       commit('updateLikedXXX', {
         name: 'songs',
-        data: localLikedSongIds,
+        data: [],
       });
       return;
     }
@@ -90,7 +70,7 @@ export default {
         if (result.ids) {
           commit('updateLikedXXX', {
             name: 'songs',
-            data: [...new Set([...result.ids, ...localLikedSongIds])],
+            data: result.ids,
           });
         }
       });

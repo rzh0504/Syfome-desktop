@@ -91,6 +91,7 @@ import ArtistsInLine from '@/components/ArtistsInLine.vue';
 import ExplicitSymbol from '@/components/ExplicitSymbol.vue';
 import { mapState } from 'vuex';
 import { isNil } from 'lodash';
+import { resizeImageUrl } from '@/utils/image';
 
 export default {
   name: 'TrackListItem',
@@ -120,12 +121,11 @@ export default {
       return this.track?.privilege?.pl > 0 || this.track?.playable;
     },
     imgUrl() {
-      let image =
+      const image =
         this.track?.al?.picUrl ??
         this.track?.album?.picUrl ??
         '/img/logos/yesplaymusic.png';
-      const separator = image.includes('?') ? '&' : '?';
-      return `${image}${separator}param=224y224`;
+      return resizeImageUrl(image, 224);
     },
     artists() {
       const { ar, artists } = this.track;

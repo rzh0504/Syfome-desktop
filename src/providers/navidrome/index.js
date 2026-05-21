@@ -292,6 +292,15 @@ export async function getLibrarySongs({ offset = 0, limit = 100 } = {}) {
   }
 }
 
+export async function refreshLibrary() {
+  const response = await requestSubsonic('startScan');
+  return {
+    code: 200,
+    scanning: Boolean(response.scanStatus?.scanning),
+    count: response.scanStatus?.count || 0,
+  };
+}
+
 export async function getRandomSongs(size = 24) {
   const safeSize = Math.max(1, Number(size) || 24);
   const response = await requestSubsonic('getRandomSongs', {

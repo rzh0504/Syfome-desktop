@@ -35,9 +35,13 @@ const updateData = () => {
   const data = {
     ...initLocalStorage.data,
     ...parsedData,
+    activeProvider: 'navidrome',
     sources: {
       ...initLocalStorage.data.sources,
-      ...(parsedData?.sources || {}),
+      navidrome: {
+        ...initLocalStorage.data.sources.navidrome,
+        ...(parsedData?.sources?.navidrome || {}),
+      },
     },
   };
   localStorage.setItem('data', JSON.stringify(data));

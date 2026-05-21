@@ -1,4 +1,4 @@
-import { getActiveProvider, getProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 import { cacheAlbum, getAlbumFromCache } from '@/utils/db';
 
 /**
@@ -7,14 +7,13 @@ import { cacheAlbum, getAlbumFromCache } from '@/utils/db';
  * @param {number} id
  */
 export function getAlbum(id) {
-  const provider = String(id).startsWith('webdav:')
-    ? getProvider('webdav')
-    : getActiveProvider();
   const fetchLatest = () => {
-    return provider.getAlbumDetail(id).then(data => {
-      cacheAlbum(id, data);
-      return data;
-    });
+    return getActiveProvider()
+      .getAlbumDetail(id)
+      .then(data => {
+        cacheAlbum(id, data);
+        return data;
+      });
   };
   fetchLatest();
 

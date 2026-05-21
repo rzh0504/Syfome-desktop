@@ -4,21 +4,7 @@
       <div class="section-1">
         <img src="/img/logos/yesplaymusic.png" />
       </div>
-      <div class="title">添加媒体源</div>
-      <div class="source-tabs">
-        <button
-          :class="{ active: sourceType === 'navidrome' }"
-          @click="sourceType = 'navidrome'"
-        >
-          Navidrome
-        </button>
-        <button
-          :class="{ active: sourceType === 'webdav' }"
-          @click="sourceType = 'webdav'"
-        >
-          WebDAV
-        </button>
-      </div>
+      <div class="title">连接 Navidrome</div>
       <div class="section-2">
         <div class="input-box">
           <div class="container" :class="{ active: inputFocus === 'server' }">
@@ -28,26 +14,10 @@
                 id="server"
                 v-model="server"
                 type="text"
-                :placeholder="serverPlaceholder"
+                placeholder="服务器地址，例如 http://127.0.0.1:4533"
                 @focus="inputFocus = 'server'"
                 @blur="inputFocus = ''"
-                @keyup.enter="connectSource"
-              />
-            </div>
-          </div>
-        </div>
-        <div v-if="sourceType === 'webdav'" class="input-box">
-          <div class="container" :class="{ active: inputFocus === 'path' }">
-            <svg-icon icon-class="list" />
-            <div class="inputs">
-              <input
-                id="path"
-                v-model="webdavPath"
-                type="text"
-                placeholder="目录路径，例如 /Music"
-                @focus="inputFocus = 'path'"
-                @blur="inputFocus = ''"
-                @keyup.enter="connectSource"
+                @keyup.enter="login"
               />
             </div>
           </div>
@@ -63,7 +33,7 @@
                 placeholder="用户名"
                 @focus="inputFocus = 'username'"
                 @blur="inputFocus = ''"
-                @keyup.enter="connectSource"
+                @keyup.enter="login"
               />
             </div>
           </div>
@@ -81,15 +51,15 @@
                 "
                 @focus="inputFocus = 'password'"
                 @blur="inputFocus = ''"
-                @keyup.enter="connectSource"
+                @keyup.enter="login"
               />
             </div>
           </div>
         </div>
       </div>
       <div class="confirm">
-        <button v-show="!processing" @click="connectSource">
-          {{ sourceType === 'webdav' ? '连接 WebDAV' : $t('login.login') }}
+        <button v-show="!processing" @click="login">
+          {{ $t('login.login') }}
         </button>
         <button v-show="processing" class="loading" disabled>
           <span></span>
@@ -98,8 +68,7 @@
         </button>
       </div>
       <div class="notice">
-        选择 Navidrome / OpenSubsonic 或 WebDAV
-        作为媒体源。登录信息仅保存在本地。
+        连接 Navidrome / OpenSubsonic 服务器。登录信息仅保存在本地。
       </div>
     </div>
   </div>
@@ -109,41 +78,32 @@
 import { mapMutations } from 'vuex';
 import nativeAlert from '@/utils/nativeAlert';
 import { loginWithAccount } from '@/api/auth';
-import {
-  getProvider,
-  setActiveProvider as persistActiveProvider,
-} from '@/providers';
+import { setActiveProvider as persistActiveProvider } from '@/providers';
 
 export default {
   name: 'Login',
   data() {
     return {
       processing: false,
-      sourceType: 'navidrome',
       server: localStorage.getItem('navidromeServer') || '',
-      webdavPath: '/Music',
       username: '',
       password: '',
       inputFocus: '',
     };
   },
-  computed: {
-    serverPlaceholder() {
-      if (this.sourceType === 'webdav') {
-        return '服务器地址，例如 https://example.com/remote.php/dav/files/me';
-      }
-      return '服务器地址，例如 http://127.0.0.1:4533';
-    },
+  created() {
+    this.loadEditSource();
   },
   methods: {
     ...mapMutations(['setActiveProvider', 'updateData', 'upsertSource']),
-    connectSource() {
-      if (this.sourceType === 'webdav') {
-        this.connectWebdav();
-        return;
-      }
+    loadEditSource() {
+      if (this.$route.query.edit !== '1') return;
 
-      this.login();
+      const source = this.$store.state.data.sources?.navidrome;
+      if (!source) return;
+
+      this.server = source.serverUrl || this.server;
+      this.username = source.username || '';
     },
     login() {
       if (!this.server || !this.username || !this.password) {
@@ -192,67 +152,6 @@ export default {
         nativeAlert(data.msg ?? data.message ?? '账号或密码错误，请检查');
       }
     },
-    connectWebdav() {
-      if (!this.server) {
-        nativeAlert('请填写 WebDAV 服务器地址');
-        return;
-      }
-
-      const webdavProvider = getProvider('webdav');
-      const params = {
-        serverUrl: this.server.trim(),
-        path: this.webdavPath || '/',
-        username: this.username.trim(),
-        password: this.password,
-      };
-
-      this.processing = true;
-      webdavProvider
-        .login(params)
-        .then(data => {
-          const sourceKey = webdavProvider.rememberCredentials(params);
-          this.upsertSource({
-            key: 'webdav',
-            name: 'WebDAV',
-            provider: 'webdav',
-            enabled: true,
-            sourceKey,
-            serverUrl: params.serverUrl,
-            path: params.path,
-            username: params.username,
-            connectedAt: Date.now(),
-          });
-          persistActiveProvider('webdav');
-          this.setActiveProvider('webdav');
-          this.updateData({ key: 'loginMode', value: 'webdav' });
-          this.updateData({ key: 'user', value: data.profile || {} });
-          webdavProvider
-            .scanDirectory(params)
-            .then(stats => {
-              this.updateData({
-                key: 'librarySongsUpdatedAt',
-                value: Date.now(),
-              });
-              this.$store.dispatch(
-                'showToast',
-                `WebDAV 索引完成，已读取 ${stats.audio} 首歌曲`
-              );
-            })
-            .catch(error => {
-              this.$store.dispatch(
-                'showToast',
-                `WebDAV 后台索引失败：${error.message || error}`
-              );
-            });
-          this.$router.push({ path: '/library' });
-        })
-        .catch(error => {
-          nativeAlert(`WebDAV 连接失败：${error.message || error}`);
-        })
-        .finally(() => {
-          this.processing = false;
-        });
-    },
   },
 };
 </script>
@@ -278,29 +177,6 @@ export default {
   font-weight: 700;
   margin-bottom: 18px;
   color: var(--color-text);
-}
-
-.source-tabs {
-  display: flex;
-  gap: 8px;
-  width: 300px;
-  margin-bottom: 28px;
-
-  button {
-    flex: 1;
-    height: 36px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--color-text);
-    background: var(--color-secondary-bg);
-    transition: 0.2s;
-  }
-
-  button.active {
-    color: var(--color-primary);
-    background: var(--color-primary-bg);
-  }
 }
 
 .section-1 {

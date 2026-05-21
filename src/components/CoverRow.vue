@@ -40,6 +40,7 @@
 <script>
 import Cover from '@/components/Cover.vue';
 import ExplicitSymbol from '@/components/ExplicitSymbol.vue';
+import { resizeImageUrl } from '@/utils/image';
 
 export default {
   name: 'CoverRow',
@@ -111,9 +112,7 @@ export default {
       }
       let img = item.img1v1Url || item.picUrl || item.coverImgUrl;
       if (!img) return '/img/logos/yesplaymusic.png';
-      const httpsImg = img.replace('http://', 'https://');
-      const separator = httpsImg.includes('?') ? '&' : '?';
-      return `${httpsImg}${separator}param=512y512`;
+      return resizeImageUrl(img, 512);
     },
   },
 };

@@ -1,4 +1,4 @@
-import { getActiveProvider, getProvider } from '@/providers';
+import { getActiveProvider } from '@/providers';
 import {
   cacheTrackDetail,
   getTrackDetailFromCache,
@@ -41,34 +41,29 @@ export function getTrackDetail(ids) {
     .split(',')
     .map(id => id.trim())
     .filter(Boolean);
-  const webdavIds = idsInArray.filter(id => id.startsWith('webdav:'));
-  const activeIds = idsInArray.filter(id => !id.startsWith('webdav:'));
+  if (idsInArray.length === 0) {
+    return Promise.resolve({ songs: [], privileges: [] });
+  }
 
   const fetchLatest = () => {
-    const requests = [];
-    if (activeIds.length > 0) {
-      requests.push(getActiveProvider().getSongDetails(activeIds.join(',')));
-    }
-    if (webdavIds.length > 0) {
-      requests.push(getProvider('webdav').getSongDetails(webdavIds.join(',')));
-    }
-
-    return Promise.all(requests).then(results => {
-      const songs = results.flatMap(data => data.songs || []);
-      const privileges = results.flatMap(data => data.privileges || []);
-      songs.forEach(song => {
-        const privilege = privileges.find(t => t.id === song.id);
-        cacheTrackDetail(song, privilege);
+    return getActiveProvider()
+      .getSongDetails(idsInArray.join(','))
+      .then(data => {
+        const songs = data.songs || [];
+        const privileges = data.privileges || [];
+        songs.forEach(song => {
+          const privilege = privileges.find(t => t.id === song.id);
+          cacheTrackDetail(song, privilege);
+        });
+        return {
+          songs: idsInArray
+            .map(id => songs.find(song => String(song.id) === id))
+            .filter(Boolean),
+          privileges: idsInArray
+            .map(id => privileges.find(item => String(item.id) === id))
+            .filter(Boolean),
+        };
       });
-      return {
-        songs: idsInArray
-          .map(id => songs.find(song => String(song.id) === id))
-          .filter(Boolean),
-        privileges: idsInArray
-          .map(id => privileges.find(item => String(item.id) === id))
-          .filter(Boolean),
-      };
-    });
   };
   fetchLatest();
 
@@ -83,14 +78,13 @@ export function getTrackDetail(ids) {
  * @param {number} id - 音乐 id
  */
 export function getLyric(id) {
-  const provider = String(id).startsWith('webdav:')
-    ? getProvider('webdav')
-    : getActiveProvider();
   const fetchLatest = () => {
-    return provider.getLyrics(id).then(result => {
-      cacheLyric(id, result);
-      return result;
-    });
+    return getActiveProvider()
+      .getLyrics(id)
+      .then(result => {
+        cacheLyric(id, result);
+        return result;
+      });
   };
 
   fetchLatest();
@@ -145,10 +139,7 @@ export function likeATrack(params) {
  * @param {number=} params.time
  */
 export function scrobble(params) {
-  const provider = String(params.id).startsWith('webdav:')
-    ? getProvider('webdav')
-    : getActiveProvider();
-  return provider.scrobbleSong({
+  return getActiveProvider().scrobbleSong({
     id: params.id,
     time: params.time,
     submission: params.submission !== false,

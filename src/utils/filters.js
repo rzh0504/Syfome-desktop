@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import locale from '@/locale';
+import { resizeImageUrl } from '@/utils/image';
 
 Vue.filter('formatTime', (Milliseconds, format = 'HH:MM:SS') => {
   if (!Milliseconds) return '';
@@ -61,20 +62,7 @@ Vue.filter('formatAlbumType', (type, album) => {
 });
 
 Vue.filter('resizeImage', (imgUrl, size = 512) => {
-  if (!imgUrl) return '';
-  if (imgUrl.startsWith('data:')) return imgUrl;
-  if (imgUrl.startsWith('http://127.0.0.1:')) return imgUrl;
-  if (imgUrl.includes('/rest/getCoverArt.view')) {
-    const separator = imgUrl.includes('?') ? '&' : '?';
-    return `${imgUrl}${separator}size=${size}`;
-  }
-  if (!/^https?:\/\//i.test(imgUrl)) return imgUrl;
-  let httpsImgUrl = imgUrl;
-  if (imgUrl.slice(0, 5) !== 'https') {
-    httpsImgUrl = 'https' + imgUrl.slice(4);
-  }
-  const separator = httpsImgUrl.includes('?') ? '&' : '?';
-  return `${httpsImgUrl}${separator}param=${size}y${size}`;
+  return resizeImageUrl(imgUrl, size);
 });
 
 Vue.filter('formatPlayCount', count => {
