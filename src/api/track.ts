@@ -27,6 +27,7 @@ type LikeTrackParams = {
 
 type ScrobbleParams = {
   id: string | number;
+  sourceid?: string | number;
   time?: number;
   submission?: boolean;
 };

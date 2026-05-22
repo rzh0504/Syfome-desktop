@@ -9,6 +9,22 @@ import { isCreateTray } from '@/utils/platform';
 import { Howl, Howler } from 'howler';
 import shuffle from 'lodash/shuffle';
 
+type TrackId = string | number;
+type RepeatMode = 'off' | 'on' | 'one';
+type PlaylistSource = { type: string; id: TrackId };
+type TrackLike = {
+  id: TrackId;
+  uid?: TrackId;
+  source?: string;
+  name?: string;
+  dt?: number;
+  ar?: { name?: string }[];
+  artists?: { name?: string }[];
+  al?: { name?: string; picUrl?: string };
+  album?: { name?: string; picUrl?: string };
+  [key: string]: any;
+};
+
 const PLAY_PAUSE_FADE_DURATION = 200;
 
 const INDEX_IN_PLAY_NEXT = -1;
@@ -23,16 +39,16 @@ const UNPLAYABLE_CONDITION = {
 };
 
 const electronAPI =
-  process.env.IS_ELECTRON === true ? window.electronAPI : null;
+  Boolean(process.env.IS_ELECTRON) ? window.electronAPI : null;
 const excludeSaveKeys = [
   '_playing',
   '_personalFMLoading',
   '_personalFMNextLoading',
 ];
 
-function setTitle(track) {
+function setTitle(track: TrackLike | null): void {
   document.title = track
-    ? `${track.name} · ${track.ar[0].name} - YesPlayMusic`
+    ? `${track.name} · ${track.ar?.[0]?.name || ''} - YesPlayMusic`
     : 'YesPlayMusic';
   if (isCreateTray) {
     electronAPI?.send('updateTrayTooltip', document.title);
@@ -40,13 +56,13 @@ function setTitle(track) {
   store.commit('updateTitle', document.title);
 }
 
-function setTrayLikeState(isLiked) {
+function setTrayLikeState(isLiked: boolean): void {
   if (isCreateTray) {
     electronAPI?.send('updateTrayLikeState', isLiked);
   }
 }
 
-function recordLocalPlayHistory(track) {
+function recordLocalPlayHistory(track: TrackLike): void {
   if (!track?.id) return;
   const history = store.state.data.localPlayHistory || [];
   const entry = {
@@ -65,7 +81,7 @@ function recordLocalPlayHistory(track) {
   });
 }
 
-function artworkFor(track, size) {
+function artworkFor(track: TrackLike, size: number): string {
   const src = track.al?.picUrl || '';
   if (!src) return '';
   if (src.startsWith('data:') || src.startsWith('http://127.0.0.1:')) {
@@ -74,7 +90,32 @@ function artworkFor(track, size) {
   return `${src}?param=${size}y${size}`;
 }
 
-export default class {
+export default class Player {
+  [key: string]: any;
+
+  _playing: boolean;
+  _progress: number;
+  _enabled: boolean;
+  _repeatMode: RepeatMode;
+  _shuffle: boolean;
+  _reversed: boolean;
+  _volume: number;
+  _volumeBeforeMuted: number;
+  _personalFMLoading: boolean;
+  _personalFMNextLoading: boolean;
+  _list: TrackId[];
+  _current: number;
+  _shuffledList: TrackId[];
+  _shuffledCurrent: number;
+  _playlistSource: PlaylistSource;
+  _currentTrack: TrackLike;
+  _playNextList: TrackId[];
+  _isPersonalFM: boolean;
+  _personalFMTrack: TrackLike;
+  _personalFMNextTrack: TrackLike;
+  createdBlobRecords: string[];
+  _howler: Howl | null;
+
   constructor() {
     // 播放器状态
     this._playing = false; // 是否正在播放中
@@ -406,7 +447,7 @@ export default class {
       return Promise.resolve(null);
     }
   }
-  async _getAudioSourceFromUnblockMusic() {
+  async _getAudioSourceFromUnblockMusic(_track?: TrackLike) {
     return null;
   }
   _getAudioSource(track) {
@@ -587,7 +628,7 @@ export default class {
   }
 
   appendTrack(trackID) {
-    this.list.append(trackID);
+    this.list.push(trackID);
   }
   playNextTrack() {
     // TODO: 切换歌曲时增加加载中的状态
@@ -602,7 +643,7 @@ export default class {
       this._playNextList.shift();
       next = this.current;
     }
-    this.current = next;
+    this.current = Number(next);
     this._replaceCurrentTrack(trackID);
     return true;
   }
@@ -613,7 +654,7 @@ export default class {
   playPrevTrack() {
     const [trackID, index] = this._getPrevTrack();
     if (trackID === undefined) return false;
-    this.current = index;
+    this.current = Number(index);
     this._replaceCurrentTrack(
       trackID,
       true,
@@ -765,7 +806,7 @@ export default class {
   }
 
   sendSelfToIpcMain() {
-    if (process.env.IS_ELECTRON !== true) return false;
+    if (!process.env.IS_ELECTRON) return false;
     let liked = store.state.liked.songs.includes(this.currentTrack.id);
     electronAPI?.send('player', {
       playing: this.playing,

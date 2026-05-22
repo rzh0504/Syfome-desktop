@@ -12,6 +12,7 @@ type PlaylistDetail = {
   name?: string;
   coverImgUrl?: string;
   tracks: PlaylistTrack[];
+  trackIds: PlaylistTrack[];
 };
 
 type CreatePlaylistParams = {
@@ -201,6 +202,10 @@ export function dailyRecommendTracks() {
  * @param {number=} params.id
  * @param {number=} params.pid
  */
-export function intelligencePlaylist() {
+export function intelligencePlaylist(_params?: {
+  id?: string | number;
+  pid?: string | number;
+  sid?: string | number;
+}) {
   return Promise.resolve({ data: [] });
 }
