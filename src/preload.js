@@ -1,23 +1,16 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const os = require('os');
 
 const sendChannels = new Set([
   'close',
   'maximizeOrUnmaximize',
-  'metadata',
   'minimize',
   'nativeAlert',
   'player',
-  'playerCurrentTrackTime',
   'removeProxy',
   'restoreDefaultShortcuts',
-  'seeked',
-  'sendLyrics',
   'setProxy',
   'settings',
   'switchGlobalShortcutStatusTemporary',
-  'switchRepeatMode',
-  'switchShuffle',
   'updateShortcut',
   'updateTrayIcon',
   'updateTrayLikeState',
@@ -38,14 +31,13 @@ const onChannels = new Set([
   'rememberCloseAppOption',
   'repeat',
   'routerGo',
-  'saveLyricFinished',
   'search',
   'setPosition',
   'shuffle',
 ]);
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  platform: os.platform(),
+  platform: process.platform,
   send(channel, ...args) {
     if (sendChannels.has(channel)) {
       ipcRenderer.send(channel, ...args);

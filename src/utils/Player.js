@@ -1,11 +1,11 @@
 import { getAlbum } from '@/api/album';
 import { getArtist } from '@/api/artist';
 import { getPlaylistDetail, intelligencePlaylist } from '@/api/playlist';
-import { getLyric, getMP3, getTrackDetail, scrobble } from '@/api/track';
+import { getMP3, getTrackDetail, scrobble } from '@/api/track';
 import store from '@/store';
 import { isAccountLoggedIn } from '@/utils/auth';
 import { cacheTrackSource, getTrackSource } from '@/utils/db';
-import { isCreateMpris, isCreateTray } from '@/utils/platform';
+import { isCreateTray } from '@/utils/platform';
 import { Howl, Howler } from 'howler';
 import shuffle from 'lodash/shuffle';
 
@@ -221,9 +221,6 @@ export default class {
     this._progress = value;
     if (this._howler) {
       this._howler.seek(value);
-      if (isCreateMpris) {
-        electronAPI?.send('seeked', this._howler.seek());
-      }
     }
   }
   get isCurrentTrackLiked() {
@@ -264,9 +261,6 @@ export default class {
         store.state.player._progress = progress;
       }
       localStorage.setItem('playerCurrentTrackTime', progress);
-      if (isCreateMpris) {
-        electronAPI?.send('playerCurrentTrackTime', progress);
-      }
     }, 1000);
   }
   _getNextTrack() {
@@ -560,30 +554,6 @@ export default class {
     };
 
     navigator.mediaSession.metadata = new window.MediaMetadata(metadata);
-    if (isCreateMpris) {
-      this._updateMprisState(track, metadata);
-    }
-  }
-  // OSDLyrics 会检测 Mpris 状态并寻找对应歌词文件，所以要在更新 Mpris 状态之前保证歌词下载完成
-  async _updateMprisState(track, metadata) {
-    if (!store.state.settings.enableOsdlyricsSupport) {
-      return electronAPI?.send('metadata', metadata);
-    }
-
-    let lyricContent = await getLyric(track.id);
-
-    if (!lyricContent.lrc || !lyricContent.lrc.lyric) {
-      return electronAPI?.send('metadata', metadata);
-    }
-
-    electronAPI?.send('sendLyrics', {
-      track,
-      lyrics: lyricContent.lrc.lyric,
-    });
-
-    electronAPI?.on('saveLyricFinished', () => {
-      electronAPI?.send('metadata', metadata);
-    });
   }
   _updateMediaSessionPositionState() {
     if ('mediaSession' in navigator === false) {
@@ -694,10 +664,7 @@ export default class {
       this.play();
     }
   }
-  seek(time = null, sendMpris = true) {
-    if (isCreateMpris && sendMpris && time) {
-      electronAPI?.send('seeked', time);
-    }
+  seek(time = null) {
     if (time !== null) {
       this._howler?.seek(time);
     }
@@ -815,15 +782,9 @@ export default class {
     } else {
       this.repeatMode = 'on';
     }
-    if (isCreateMpris) {
-      electronAPI?.send('switchRepeatMode', this.repeatMode);
-    }
   }
   switchShuffle() {
     this.shuffle = !this.shuffle;
-    if (isCreateMpris) {
-      electronAPI?.send('switchShuffle', this.shuffle);
-    }
   }
   switchReversed() {
     this.reversed = !this.reversed;

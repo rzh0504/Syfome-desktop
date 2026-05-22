@@ -16,7 +16,6 @@ let localStorage = {
     nyancatStyle: false,
     showLyricsTranslation: true,
     lyricsBackground: true,
-    enableOsdlyricsSupport: false,
     closeAppOption: 'ask',
     enableGlobalShortcut: true,
     showLibraryDefault: false,

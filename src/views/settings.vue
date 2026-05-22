@@ -270,34 +270,6 @@
           </select>
         </div>
       </div>
-      <div v-if="isElectron && isLinux" class="item">
-        <div class="left">
-          <div class="title">
-            {{ $t('settings.unm.enable') }}
-            <a target="_blank" href="https://github.com/osdlyrics/osdlyrics"
-              >OSDLyrics</a
-            >
-            {{ $t('settings.enableOsdlyricsSupport.title') }}
-          </div>
-          <div class="description">
-            {{ $t('settings.enableOsdlyricsSupport.desc1') }}
-            <br />
-            {{ $t('settings.enableOsdlyricsSupport.desc2') }}
-          </div>
-        </div>
-        <div class="right">
-          <div class="toggle">
-            <input
-              id="enable-osdlyrics-support"
-              v-model="enableOsdlyricsSupport"
-              type="checkbox"
-              name="enable-osdlyrics-support"
-            />
-            <label for="enable-osdlyrics-support"></label>
-          </div>
-        </div>
-      </div>
-
       <h3>{{ $t('settings.customization') }}</h3>
       <div v-if="false" class="item">
         <div class="left">
@@ -867,17 +839,6 @@ export default {
       set(value) {
         this.$store.commit('updateSettings', {
           key: 'showLyricsTime',
-          value,
-        });
-      },
-    },
-    enableOsdlyricsSupport: {
-      get() {
-        return this.settings.enableOsdlyricsSupport;
-      },
-      set(value) {
-        this.$store.commit('updateSettings', {
-          key: 'enableOsdlyricsSupport',
           value,
         });
       },
