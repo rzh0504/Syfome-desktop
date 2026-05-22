@@ -7,8 +7,6 @@ declare module '*.vue' {
   export default component;
 }
 
-declare module 'virtual:svg-icons-register';
-
 declare global {
   interface Window {
     electronAPI?: {

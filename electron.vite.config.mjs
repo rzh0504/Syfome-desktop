@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           input: {
-            background: resolve('src/background.js'),
+            background: resolve('src/background.ts'),
           },
         },
       },
@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           input: {
-            preload: resolve('src/preload.js'),
+            preload: resolve('src/preload.ts'),
           },
         },
       },
