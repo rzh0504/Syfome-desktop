@@ -98,4 +98,5 @@ Current phase: Phase 5 - manual runtime QA
 - Bottom player and lyrics page now maintain local progress values refreshed from `player.seek()` so progress bars update continuously without requiring a route re-render.
 - `ButtonIcon` sets a root text color so slotted SVG icons inherit the intended theme color under Vue 3 scoped-slot styling.
 - `ContextMenu` uses Vue 3 `:deep()` selectors for slotted menu content (`.item`, `.item-info`, `hr`), restoring the pre-migration menu layout for profile and track context menus.
+- Husky was upgraded from v4 to v9 with `.husky/pre-commit`; the old v4 Git hook used `pnpx --no-install`, which is incompatible with pnpm 11 / `pnpm dlx`.
 - Full GUI/runtime QA is still pending. The current automated checks verify install, lint, typecheck, Vite build, Electron dev startup, and Windows packaging.

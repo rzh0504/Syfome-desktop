@@ -20,6 +20,7 @@
     "electron:publish": "electron-vite build && electron-builder -mwl -p always",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
+    "prepare": "husky",
     "prettier": "prettier --write ./src"
   },
   "main": "out/main/background.js",
@@ -78,7 +79,7 @@
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-vue": "^9.33.0",
-    "husky": "^4.3.0",
+    "husky": "^9.1.7",
     "prettier": "2.5.1",
     "sass": "^1.26.11",
     "typescript": "^6.0.3",
@@ -118,10 +119,5 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "pnpm run prettier"
-    }
-  }
+  ]
 }
