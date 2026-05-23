@@ -23,7 +23,6 @@
   },
   "include": [
     "electron.vite.config.mjs",
-    "src/**/*.js",
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.vue"

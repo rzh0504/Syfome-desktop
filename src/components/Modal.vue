@@ -17,13 +17,17 @@
   </div>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+import type { CSSProperties } from 'vue';
+import type { PropType } from 'vue';
+
+export default defineComponent({
   name: 'Modal',
   props: {
     show: Boolean,
     close: {
-      type: Function,
+      type: Function as PropType<() => void>,
       default: () => {},
     },
     title: {
@@ -48,7 +52,7 @@ export default {
     },
   },
   computed: {
-    modalStyles() {
+    modalStyles(): CSSProperties {
       return {
         width: this.width,
         minWidth: this.minWidth,
@@ -62,7 +66,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

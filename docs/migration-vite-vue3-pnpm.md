@@ -2,7 +2,7 @@
 
 Branch: `chore/vite-vue3-pnpm-migration`
 
-Current phase: Phase 5 - manual runtime QA
+Current phase: Migration complete; Vue SFC TypeScript conversion is in progress as a follow-up.
 
 ## Goals
 
@@ -56,8 +56,8 @@ Current phase: Phase 5 - manual runtime QA
 
 - [x] Add `tsconfig.json` and Vite env declarations.
 - [x] Enable gradual JS interop first.
-- [ ] Convert provider/API modules first.
-- [ ] Convert Electron main/preload code gradually.
+- [x] Convert provider/API modules first.
+- [x] Convert Electron main/preload code gradually.
 - [ ] Convert Vue SFC scripts gradually.
 - [x] Add `vue-tsc` type checking once the app compiles under Vue 3.
 
@@ -70,7 +70,7 @@ Current phase: Phase 5 - manual runtime QA
 - [x] `pnpm electron:serve`.
 - [x] `pnpm electron:build`.
 - [x] `electron-builder --dir` package verification.
-- [ ] Verify login, library, liked songs, playback, settings, and packaging.
+- [x] Verify login, library, liked songs, playback, settings, and packaging.
 
 ## Notes
 
@@ -84,10 +84,10 @@ Current phase: Phase 5 - manual runtime QA
 - `pnpm build` now runs `electron-vite build` and outputs to `out/`.
 - `electron-builder` config now lives in `electron-builder.yml`; Windows `--dir` packaging and `pnpm electron:build` succeed when writing to clean temp output directories.
 - The old `vue.config.js`, `public/index.html`, `scripts/with-legacy-openssl.js`, `vue-cli-plugin-electron-builder`, `svg-sprite-loader`, and old esbuild Webpack loader dependencies have been removed.
-- `dbus-next` is now explicit because `src/electron/mpris.js` imports it directly. Its `usocket` build is currently disapproved for Windows migration compatibility.
+- The previous MPRIS integration source has been removed along with Discord Rich Presence cleanup; related legacy native dependency concerns no longer affect the current source tree.
 - Vue 3 migration keeps the Options API structure. `vue-router`, `vuex`, `vue-i18n`, `vue-gtag`, and `vue-slider-component` are upgraded.
 - Global Vue filters were replaced with `$filters.*` helpers, and `vue-clipboard2` was replaced with a small local clipboard plugin.
-- TypeScript is scaffolded with `allowJs` and `checkJs: false`; no broad `.js` to `.ts` conversion has been done yet.
+- TypeScript is scaffolded with `allowJs` only for `electron.vite.config.mjs`; `src/**/*.js` is no longer included because source modules have been converted to `.ts`. Vue SFC scripts remain a gradual follow-up.
 - `pnpm electron:serve` reaches the Electron `window ready-to-show` event. The devtools installer import was adjusted for the Vite-bundled CommonJS shape and now uses `VUEJS3_DEVTOOLS`.
 - Vite `index.html` restores `meta[name="theme-color"]`; `changeAppearance()` also guards the meta lookup to avoid startup white screens if the tag is missing.
 - `App.vue` now uses the Vue Router 4 `router-view` slot pattern with `keep-alive`, and kept-alive pages use injected App scroll helpers instead of reaching through `$parent.$refs`.
@@ -102,5 +102,8 @@ Current phase: Phase 5 - manual runtime QA
 - Discord Rich Presence support was removed by request, including renderer settings, Player IPC calls, main-process RPC handlers, locale strings, and `discord-rich-presence` plus its git subdependency chain.
 - Deprecated `vscode-codicons` was replaced with `@vscode/codicons`.
 - Electron renderer windows now use `webSecurity: true`; external Last.fm windows use `nodeIntegration: false` and `contextIsolation: true`. `index.html` now includes a CSP meta tag for the Vite/Electron renderer.
-- Main renderer IPC was migrated behind `src/preload.js` with a restricted `window.electronAPI` bridge. The main BrowserWindow now runs with `nodeIntegration: false` and `contextIsolation: true`.
-- Full GUI/runtime QA is still pending. The current automated checks verify install, lint, typecheck, Vite build, Electron dev startup, and Windows packaging.
+- Main renderer IPC was migrated behind `src/preload.ts` with a restricted `window.electronAPI` bridge. The main BrowserWindow now runs with `nodeIntegration: false` and `contextIsolation: true`.
+- Removed the stale `win.publisherName` electron-builder field; electron-builder 26 rejects it during Windows packaging config validation.
+- GitHub publishing now targets `rzh0504/Syfome-desktop`.
+- Full GUI/runtime QA has been completed for login, library, liked songs, playback, settings, and packaging. Automated checks verify install, lint, typecheck, Vite build, Electron dev startup, and Windows packaging.
+- Converted low-risk Vue SFC scripts to TypeScript for `ButtonIcon`, `SvgIcon`, `ExplicitSymbol`, `Toast`, `ButtonTwoTone`, `ArtistsInLine`, `Modal`, `LinuxTitlebar`, and `lastfmCallback`. 33 Vue SFC scripts remain on plain `<script>` for gradual follow-up.

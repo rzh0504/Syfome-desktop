@@ -4,15 +4,22 @@
   </transition>
 </template>
 
-<script>
-import { mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 
-export default {
+type ToastState = {
+  show: boolean;
+  text: string;
+};
+
+export default defineComponent({
   name: 'Toast',
   computed: {
-    ...mapState(['toast']),
+    toast(): ToastState {
+      return this.$store.state.toast as ToastState;
+    },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

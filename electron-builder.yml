@@ -8,8 +8,8 @@ directories:
   output: dist_electron
 publish:
   - provider: github
-    owner: qier222
-    repo: YesPlayMusic
+    owner: rzh0504
+    repo: Syfome-desktop
     vPrefixedTagName: true
     releaseType: draft
 mac:
@@ -30,7 +30,6 @@ win:
     - target: nsis
       arch:
         - x64
-  publisherName: Syfom Desktop
   icon: build/icons/icon.ico
   publish:
     - github
