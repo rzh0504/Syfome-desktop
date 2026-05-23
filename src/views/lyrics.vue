@@ -313,7 +313,7 @@ import { isAccountLoggedIn } from '@/utils/auth';
 import { hasListSource, getListSourcePath } from '@/utils/playList';
 import locale from '@/locale';
 import { resizeImageUrl } from '@/utils/image';
-import type { TrackId } from '@/types/music';
+import type { PlayerState, PlayerTrack, TrackId } from '@/types/music';
 
 type LyricLine = {
   rawTime: string;
@@ -329,35 +329,6 @@ type RightClickLyric = DisplayLyricLine & {
   idx: number;
 };
 
-type PlayerTrack = {
-  id?: TrackId;
-  name?: string;
-  ar?: Array<{ id?: TrackId; name?: string }>;
-  al?: { id?: TrackId; name?: string; picUrl?: string };
-};
-
-type PlayerState = {
-  currentTrack: PlayerTrack;
-  currentTrackDuration: number;
-  volume: number;
-  progress: number;
-  playing: boolean;
-  isCurrentTrackLiked?: boolean;
-  isPersonalFM?: boolean;
-  repeatMode?: string;
-  shuffle?: boolean;
-  seek: (position?: number | null, shouldPlay?: boolean) => number | undefined;
-  playPrevTrack: () => void;
-  playOrPause: () => void;
-  playNextFMTrack: () => void;
-  playNextTrack: () => void;
-  play: () => void;
-  moveToFMTrash: () => void;
-  switchRepeatMode: () => void;
-  switchShuffle: () => void;
-  mute: () => void;
-};
-
 type ContextMenuInstance = {
   openMenu: (e: MouseEvent) => void;
 };
@@ -368,11 +339,14 @@ type PaletteLike = {
   };
 };
 
-type LocaleWithT = typeof locale & {
-  t: (key: string) => string;
+type VibrantModule = {
+  from: (
+    input: string,
+    options?: { colorCount?: number }
+  ) => { getPalette: () => Promise<PaletteLike> };
 };
 
-const i18n = locale as LocaleWithT;
+const vibrant = Vibrant as VibrantModule;
 
 export default defineComponent({
   name: 'Lyrics',
@@ -600,7 +574,7 @@ export default defineComponent({
     },
     addToPlaylist() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       this.$store.dispatch('fetchLikedPlaylist');
@@ -744,7 +718,7 @@ export default defineComponent({
       if (this.settings.lyricsBackground !== true) return;
       const cover = resizeImageUrl(this.currentTrack.al?.picUrl, 256);
       if (!cover) return;
-      (Vibrant as any)
+      vibrant
         .from(cover, { colorCount: 1 })
         .getPalette()
         .then((palette: PaletteLike) => {

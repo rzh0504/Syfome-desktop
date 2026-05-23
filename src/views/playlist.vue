@@ -225,13 +225,9 @@ import ContextMenu from '@/components/ContextMenu.vue';
 import TrackList from '@/components/TrackList.vue';
 import Cover from '@/components/Cover.vue';
 import Modal from '@/components/Modal.vue';
-import type { Track, TrackId } from '@/types/music';
+import type { TrackId, TrackListTrack } from '@/types/music';
 
-type PlaylistTrack = Track & {
-  songId?: TrackId;
-  al?: { name?: string; picUrl?: string; id?: TrackId };
-  ar?: Array<{ id?: TrackId; name?: string }>;
-};
+type PlaylistTrack = TrackListTrack;
 
 type PlaylistLike = {
   id: TrackId;
@@ -250,12 +246,6 @@ type PlaylistLike = {
 type ContextMenuInstance = {
   openMenu: (e: MouseEvent) => void;
 };
-
-type LocaleWithT = typeof locale & {
-  t: (key: string) => string;
-};
-
-const i18n = locale as LocaleWithT;
 
 const specialPlaylist: Record<
   string | number,
@@ -451,10 +441,10 @@ export default defineComponent({
     },
     likePlaylist(toast = false) {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
-      (subscribePlaylist as any)({
+      subscribePlaylist({
         id: this.playlist.id,
         t: this.playlist.subscribed ? 2 : 1,
       }).then((data: { code: number }) => {
@@ -561,7 +551,7 @@ export default defineComponent({
     },
     deletePlaylist() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       let confirmation = confirm(`确定要删除歌单 ${this.playlist.name}？`);
@@ -592,7 +582,7 @@ export default defineComponent({
     },
     removeTrack(trackID: TrackId) {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       this.tracks = this.tracks.filter(t => t.id !== trackID);

@@ -27,6 +27,49 @@ export type Track = {
   [key: string]: unknown;
 };
 
+export type TrackListTrack = Partial<Track> & {
+  songId?: TrackId;
+  songName?: string;
+  simpleSong?: TrackListTrack;
+  privilege?: { pl?: number };
+  playable?: boolean;
+  reason?: string;
+  playCount?: number;
+  tns?: string[];
+  alia?: string[];
+  mark?: number;
+  al?: AlbumSummary & { name?: string };
+  ar?: ArtistSummary[];
+  [key: string]: any;
+};
+
+export type PlayerTrack = TrackListTrack;
+
+export type PlayerState = {
+  currentTrack: PlayerTrack;
+  currentTrackDuration: number;
+  volume: number;
+  progress: number;
+  playing: boolean;
+  isCurrentTrackLiked?: boolean;
+  isPersonalFM?: boolean;
+  repeatMode?: string;
+  shuffle?: boolean;
+  reversed?: boolean;
+  _howler?: { _src?: string };
+  seek: (position?: number | null, shouldPlay?: boolean) => number | undefined;
+  playPrevTrack: () => void;
+  playOrPause: () => void;
+  playNextFMTrack: () => void;
+  playNextTrack: () => void;
+  play: () => void;
+  moveToFMTrash: () => void;
+  switchRepeatMode: () => void;
+  switchShuffle: () => void;
+  switchReversed: () => void;
+  mute: () => void;
+};
+
 export type PlaylistTrackRef = {
   id: TrackId;
 };

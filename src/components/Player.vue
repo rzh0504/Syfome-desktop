@@ -194,38 +194,7 @@ import ButtonIcon from '@/components/ButtonIcon.vue';
 import VueSlider from 'vue-slider-component';
 import { goToListSource, hasListSource } from '@/utils/playList';
 import { formatTrackTime } from '@/utils/common';
-import type { TrackId } from '@/types/music';
-
-type PlayerTrack = {
-  id?: TrackId;
-  name?: string;
-  ar?: Array<{ id?: TrackId; name?: string }>;
-  al?: { id?: TrackId; picUrl?: string };
-};
-
-type PlayerState = {
-  currentTrack: PlayerTrack;
-  currentTrackDuration: number;
-  volume: number;
-  progress: number;
-  playing: boolean;
-  isCurrentTrackLiked?: boolean;
-  isPersonalFM?: boolean;
-  repeatMode?: string;
-  shuffle?: boolean;
-  reversed?: boolean;
-  _howler?: { _src?: string };
-  seek: (position?: number | null, shouldPlay?: boolean) => number | undefined;
-  playPrevTrack: () => void;
-  playOrPause: () => void;
-  playNextFMTrack: () => void;
-  playNextTrack: () => void;
-  moveToFMTrash: () => void;
-  switchRepeatMode: () => void;
-  switchShuffle: () => void;
-  switchReversed: () => void;
-  mute: () => void;
-};
+import type { PlayerState, PlayerTrack, TrackId } from '@/types/music';
 
 export default defineComponent({
   name: 'Player',

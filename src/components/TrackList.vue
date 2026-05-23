@@ -85,18 +85,7 @@ import { isAccountLoggedIn } from '@/utils/auth';
 import TrackListItem from '@/components/TrackListItem.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import locale from '@/locale';
-import type { TrackId } from '@/types/music';
-
-type TrackListTrack = {
-  id?: TrackId;
-  songId?: TrackId;
-  name?: string;
-  songName?: string;
-  streamUrl?: string;
-  ar?: Array<{ name?: string }>;
-  al?: { picUrl?: string };
-  [key: string]: any;
-};
+import type { TrackId, TrackListTrack } from '@/types/music';
 
 type ContextMenuInstance = {
   openMenu: (e: MouseEvent) => void;
@@ -106,18 +95,12 @@ type TrackListParent = {
   removeTrack?: (trackId: TrackId | undefined) => void;
 };
 
-type LocaleWithT = typeof locale & {
-  t: (key: string) => string;
-};
-
 const emptyTrack: TrackListTrack = {
   id: 0,
   name: '',
   ar: [{ name: '' }],
   al: { picUrl: '' },
 };
-
-const i18n = locale as LocaleWithT;
 
 export default defineComponent({
   name: 'TrackList',
@@ -259,7 +242,7 @@ export default defineComponent({
     },
     addTrackToPlaylist() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       this.updateModal({
@@ -275,7 +258,7 @@ export default defineComponent({
     },
     removeTrackFromPlaylist() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       if (confirm(`确定要从歌单删除 ${this.rightClickedTrack.name}？`)) {
@@ -287,7 +270,7 @@ export default defineComponent({
         }).then(data => {
           this.showToast(
             data.body.code === 200
-              ? i18n.t('toast.removedFromPlaylist')
+              ? locale.t('toast.removedFromPlaylist')
               : data.body.message
           );
           (this.$parent as TrackListParent | undefined)?.removeTrack?.(trackID);
@@ -300,10 +283,10 @@ export default defineComponent({
         `track:${this.rightClickedTrack.id}`;
       this.$copyText(link)
         .then(() => {
-          this.showToast(i18n.t('toast.copied'));
+          this.showToast(locale.t('toast.copied'));
         })
         .catch(err => {
-          this.showToast(`${i18n.t('toast.copyFailed')}${err}`);
+          this.showToast(`${locale.t('toast.copyFailed')}${err}`);
         });
     },
     removeTrackFromQueue() {
@@ -314,7 +297,7 @@ export default defineComponent({
     removeTrackFromCloudDisk() {
       if (confirm(`确定要从云盘删除 ${this.rightClickedTrack.songName}？`)) {
         const trackID = this.rightClickedTrack.songId;
-        cloudDiskTrackDelete().then(data => {
+        cloudDiskTrackDelete(trackID).then(data => {
           this.showToast(
             data.code === 200 ? '已将此歌曲从云盘删除' : data.message
           );

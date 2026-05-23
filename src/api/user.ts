@@ -1,4 +1,5 @@
 import { getActiveProvider } from '@/providers';
+import type { TrackId } from '@/types/music';
 
 type StarredSong = {
   id: string | number;
@@ -149,6 +150,6 @@ export function cloudDiskTrackDetail() {
  * 删除云盘歌曲（需要登录）
  * @param {Array} id
  */
-export function cloudDiskTrackDelete() {
+export function cloudDiskTrackDelete(_id?: TrackId) {
   return Promise.resolve({ code: 501, message: 'Navidrome 不支持云盘删除' });
 }

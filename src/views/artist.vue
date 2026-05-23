@@ -182,12 +182,6 @@ type ContextMenuInstance = {
   openMenu: (e: MouseEvent) => void;
 };
 
-type LocaleWithT = typeof locale & {
-  t: (key: string) => string;
-};
-
-const i18n = locale as LocaleWithT;
-
 export default defineComponent({
   name: 'Artist',
   components: {
@@ -297,7 +291,7 @@ export default defineComponent({
     },
     followArtist() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       followAArtist({
@@ -328,10 +322,10 @@ export default defineComponent({
       const showToast = this.showToast;
       this.$copyText(`${window.location.origin}/#/artist/${id}`)
         .then(() => {
-          showToast(i18n.t('toast.copied'));
+          showToast(locale.t('toast.copied'));
         })
         .catch((error: unknown) => {
-          showToast(`${i18n.t('toast.copyFailed')}${error}`);
+          showToast(`${locale.t('toast.copyFailed')}${error}`);
         });
     },
     openInBrowser(id: TrackId | undefined) {

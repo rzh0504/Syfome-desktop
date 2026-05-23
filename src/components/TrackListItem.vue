@@ -90,26 +90,7 @@ import ExplicitSymbol from '@/components/ExplicitSymbol.vue';
 import { isNil } from 'lodash';
 import { resizeImageUrl } from '@/utils/image';
 import { formatTime } from '@/utils/filters';
-import type { TrackId } from '@/types/music';
-
-type TrackListTrack = {
-  id?: TrackId;
-  name?: string;
-  reason?: string;
-  dt?: number;
-  mark?: number;
-  playCount?: number;
-  playable?: boolean;
-  privilege?: { pl?: number };
-  ar?: Array<{ id?: TrackId; name?: string }>;
-  artists?: Array<{ id?: TrackId; name?: string }>;
-  al?: { id?: TrackId; name?: string; picUrl?: string };
-  album?: { id?: TrackId; name?: string; picUrl?: string };
-  simpleSong?: TrackListTrack;
-  tns?: string[];
-  alia?: string[];
-  [key: string]: any;
-};
+import type { TrackId, TrackListTrack } from '@/types/music';
 
 type TrackListParent = {
   type?: string;

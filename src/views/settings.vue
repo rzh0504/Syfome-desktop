@@ -608,10 +608,10 @@ type TracksCache = {
   length: number;
 };
 
-type SourceConfig = Record<string, any>;
-
-type LocaleWithCompat = typeof locale & {
-  locale: string;
+type ProxyConfig = {
+  protocol?: string;
+  server?: string;
+  port?: string | number;
 };
 
 export default defineComponent({
@@ -714,7 +714,7 @@ export default defineComponent({
         return this.settings.lang;
       },
       set(lang: string) {
-        (locale as LocaleWithCompat).locale = lang;
+        locale.locale = lang;
         this.$store.commit('changeLang', lang);
       },
     },
@@ -942,7 +942,7 @@ export default defineComponent({
         return this.settings.proxyConfig?.protocol || 'noProxy';
       },
       set(value) {
-        let config: SourceConfig = this.settings.proxyConfig || {};
+        const config: ProxyConfig = this.settings.proxyConfig || {};
         config.protocol = value;
         if (value === 'noProxy') {
           window.electronAPI?.send('removeProxy');
@@ -959,7 +959,7 @@ export default defineComponent({
         return this.settings.proxyConfig?.server || '';
       },
       set(value: string) {
-        let config: SourceConfig = this.settings.proxyConfig || {};
+        const config: ProxyConfig = this.settings.proxyConfig || {};
         config.server = value;
         this.$store.commit('updateSettings', {
           key: 'proxyConfig',
@@ -994,7 +994,7 @@ export default defineComponent({
         return this.settings.proxyConfig?.port || '';
       },
       set(value: string | number) {
-        let config: SourceConfig = this.settings.proxyConfig || {};
+        const config: ProxyConfig = this.settings.proxyConfig || {};
         config.port = value;
         this.$store.commit('updateSettings', {
           key: 'proxyConfig',

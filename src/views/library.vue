@@ -228,12 +228,6 @@ type ContextMenuInstance = {
   openMenu: (e: MouseEvent) => void;
 };
 
-type LocaleWithT = typeof locale & {
-  t: (key: string) => string;
-};
-
-const i18n = locale as LocaleWithT;
-
 /**
  * Pick the lyric part from a string formed in `[timecode] lyric`.
  *
@@ -413,7 +407,7 @@ export default defineComponent({
         !isAccountLoggedIn() &&
         !['playlists', 'librarySongs'].includes(tab)
       ) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       this.currentTab = tab;
@@ -442,7 +436,7 @@ export default defineComponent({
     },
     openAddPlaylistModal() {
       if (!isAccountLoggedIn()) {
-        this.showToast(i18n.t('toast.needToLogin'));
+        this.showToast(locale.t('toast.needToLogin'));
         return;
       }
       this.updateModal({

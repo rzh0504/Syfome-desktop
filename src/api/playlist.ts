@@ -27,6 +27,11 @@ type UpdatePlaylistTracksParams = {
   tracks: TrackId;
 };
 
+type SubscribePlaylistParams = {
+  id: TrackId;
+  t: 1 | 2 | number;
+};
+
 type CreatePlaylistResult = {
   code: number;
   id?: TrackId;
@@ -147,7 +152,7 @@ export function toplists() {
  * @param {number} params.t
  * @param {number} params.id
  */
-export function subscribePlaylist() {
+export function subscribePlaylist(_params: SubscribePlaylistParams) {
   return Promise.resolve({ code: 200 });
 }
 

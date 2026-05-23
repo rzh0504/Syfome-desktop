@@ -20,16 +20,23 @@ const i18n = createI18n({
   fallbackWarn: false,
 });
 
-Object.assign(i18n, {
+type I18nWithCompat = typeof i18n & {
+  t: (key: string) => string;
+  locale: string;
+};
+
+const compatI18n = i18n as I18nWithCompat;
+
+Object.assign(compatI18n, {
   t: (...args: Parameters<typeof i18n.global.t>) => i18n.global.t(...args),
 });
-Object.defineProperty(i18n, 'locale', {
+Object.defineProperty(compatI18n, 'locale', {
   get() {
-    return i18n.global.locale.value;
+    return compatI18n.global.locale.value;
   },
   set(value: string) {
-    i18n.global.locale.value = value;
+    compatI18n.global.locale.value = value;
   },
 });
 
-export default i18n;
+export default compatI18n;
