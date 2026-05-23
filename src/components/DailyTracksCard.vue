@@ -17,12 +17,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import locale from '@/locale';
-import { mapMutations, mapState, mapActions } from 'vuex';
 import { dailyRecommendTracks } from '@/api/playlist';
 import { isAccountLoggedIn } from '@/utils/auth';
 import sample from 'lodash/sample';
+import type { Track, TrackId } from '@/types/music';
 
 const defaultCovers = [
   '/img/logos/yesplaymusic.png',
@@ -30,14 +31,25 @@ const defaultCovers = [
   '/img/logos/yesplaymusic.png',
 ];
 
-export default {
+type PlayerLike = {
+  replacePlaylist: (
+    trackIDs: TrackId[],
+    source: string,
+    sourceType: string,
+    currentTrackID: TrackId
+  ) => void;
+};
+
+export default defineComponent({
   name: 'DailyTracksCard',
   data() {
     return { useAnimation: false };
   },
   computed: {
-    ...mapState(['dailyTracks']),
-    coverUrl() {
+    dailyTracks(): Track[] {
+      return this.$store.state.dailyTracks as Track[];
+    },
+    coverUrl(): string {
       return `${
         this.dailyTracks[0]?.al.picUrl || sample(defaultCovers)
       }?param=1024y1024`;
@@ -47,9 +59,13 @@ export default {
     if (this.dailyTracks.length === 0) this.loadDailyTracks();
   },
   methods: {
-    ...mapActions(['showToast']),
-    ...mapMutations(['updateDailyTracks']),
-    loadDailyTracks() {
+    showToast(text: string) {
+      return this.$store.dispatch('showToast', text);
+    },
+    updateDailyTracks(dailyTracks: Track[]) {
+      this.$store.commit('updateDailyTracks', dailyTracks);
+    },
+    loadDailyTracks(): void {
       if (!isAccountLoggedIn()) return;
       dailyRecommendTracks()
         .then(result => {
@@ -57,16 +73,17 @@ export default {
         })
         .catch(() => {});
     },
-    goToDailyTracks() {
+    goToDailyTracks(): void {
       this.$router.push({ name: 'dailySongs' });
     },
-    playDailyTracks() {
+    playDailyTracks(): void {
       if (!isAccountLoggedIn()) {
-        this.showToast(locale.t('toast.needToLogin'));
+        this.showToast(locale.global.t('toast.needToLogin'));
         return;
       }
-      let trackIDs = this.dailyTracks.map(t => t.id);
-      this.$store.state.player.replacePlaylist(
+      const trackIDs = this.dailyTracks.map(t => t.id);
+      const player = this.$store.state.player as PlayerLike;
+      player.replacePlaylist(
         trackIDs,
         '/daily/songs',
         'url',
@@ -74,7 +91,7 @@ export default {
       );
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

@@ -36,18 +36,35 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { getTrackDetail } from '@/api/track';
 import { search } from '@/api/others';
 import locale from '@/locale';
 import { camelCase } from 'change-case';
 import NProgress from 'nprogress';
+import type { TrackId } from '@/types/music';
 
 import TrackList from '@/components/TrackList.vue';
 import CoverRow from '@/components/CoverRow.vue';
 import ButtonTwoTone from '@/components/ButtonTwoTone.vue';
 
-export default {
+type SearchType = 'tracks' | 'albums' | 'artists' | 'playlists';
+type SearchItem = {
+  id: TrackId;
+  name: string;
+  [key: string]: any;
+};
+type SearchResult = {
+  hasMore?: boolean;
+  songs?: SearchItem[];
+  artists?: SearchItem[];
+  albums?: SearchItem[];
+  playlists?: SearchItem[];
+  albumCount?: number;
+};
+
+export default defineComponent({
   name: 'Search',
   components: {
     TrackList,
@@ -55,21 +72,24 @@ export default {
     ButtonTwoTone,
   },
   data() {
-    return { show: false, result: [], hasMore: true };
+    return { show: false, result: [] as SearchItem[], hasMore: true };
   },
   computed: {
-    keywords() {
-      return this.$route.params.keywords;
+    keywords(): string {
+      const keywords = this.$route.params.keywords;
+      return Array.isArray(keywords) ? keywords[0] : keywords;
     },
-    type() {
-      return camelCase(this.$route.params.type);
+    type(): SearchType {
+      const routeType = this.$route.params.type;
+      const type = Array.isArray(routeType) ? routeType[0] : routeType;
+      return camelCase(type) as SearchType;
     },
-    typeNameTable() {
+    typeNameTable(): Record<SearchType, string> {
       return {
-        tracks: locale.t('search.song'),
-        albums: locale.t('search.album'),
-        artists: locale.t('search.artist'),
-        playlists: locale.t('search.playlist'),
+        tracks: locale.global.t('search.song'),
+        albums: locale.global.t('search.album'),
+        artists: locale.global.t('search.artist'),
+        playlists: locale.global.t('search.playlist'),
       };
     },
   },
@@ -78,7 +98,7 @@ export default {
   },
   methods: {
     fetchData() {
-      const typeTable = {
+      const typeTable: Record<SearchType, number> = {
         tracks: 1,
         albums: 10,
         artists: 100,
@@ -89,31 +109,31 @@ export default {
         type: typeTable[this.type],
         offset: this.result.length,
       }).then(result => {
-        result = result.result;
-        this.hasMore = result.hasMore ?? true;
+        const data = result.result as SearchResult;
+        this.hasMore = data.hasMore ?? true;
         switch (this.type) {
           case 'artists':
-            this.result.push(...result.artists);
+            this.result.push(...(data.artists || []));
             break;
           case 'albums':
-            this.result.push(...result.albums);
-            if (result.albumCount <= this.result.length) {
+            this.result.push(...(data.albums || []));
+            if ((data.albumCount || 0) <= this.result.length) {
               this.hasMore = false;
             }
             break;
           case 'tracks':
-            this.result.push(...result.songs);
+            this.result.push(...(data.songs || []));
             this.getTracksDetail();
             break;
           case 'playlists':
-            this.result.push(...result.playlists);
+            this.result.push(...(data.playlists || []));
             break;
         }
         NProgress.done();
         this.show = true;
       });
     },
-    getTracksDetail() {
+    getTracksDetail(): void {
       const trackIDs = this.result.map(t => t.id);
       if (trackIDs.length === 0) return;
       getTrackDetail(trackIDs.join(',')).then(result => {
@@ -121,7 +141,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

@@ -43,3 +43,6 @@ devenv.local.nix
 
 # pre-commit
 .pre-commit-config.yaml
+
+# migration notes
+/docs/migration-vite-vue3-pnpm.md

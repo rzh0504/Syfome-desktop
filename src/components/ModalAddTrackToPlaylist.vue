@@ -17,10 +17,7 @@
         class="playlist"
         @click="addTrackToPlaylist(playlist.id)"
       >
-        <img
-          :src="$filters.resizeImage(playlist.coverImgUrl, 224)"
-          loading="lazy"
-        />
+        <img :src="resizeImage(playlist.coverImgUrl, 224)" loading="lazy" />
         <div class="info">
           <div class="title">{{ playlist.name }}</div>
           <div class="track-count">{{ playlist.trackCount }} 首</div>
@@ -30,29 +27,65 @@
   </Modal>
 </template>
 
-<script>
-import { mapActions, mapMutations, mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import Modal from '@/components/Modal.vue';
 import locale from '@/locale';
 import { addOrRemoveTrackFromPlaylist } from '@/api/playlist';
+import { resizeImage } from '@/utils/filters';
+import type { TrackId } from '@/types/music';
 
-export default {
+type Playlist = {
+  id: TrackId;
+  name: string;
+  coverImgUrl: string;
+  trackCount: number;
+  creator: { userId: TrackId };
+};
+
+type AddTrackModalState = {
+  show: boolean;
+  selectedTrackID: TrackId;
+};
+
+type ModalsState = {
+  addTrackToPlaylistModal: AddTrackModalState;
+};
+
+type DataState = {
+  user?: { userId?: TrackId };
+  likedSongPlaylistID?: TrackId;
+};
+
+type LikedState = {
+  playlists: Playlist[];
+};
+
+export default defineComponent({
   name: 'ModalAddTrackToPlaylist',
   components: {
     Modal,
   },
   data() {
     return {
-      playlists: [],
+      playlists: [] as Playlist[],
     };
   },
   computed: {
-    ...mapState(['modals', 'data', 'liked']),
+    modals(): ModalsState {
+      return this.$store.state.modals as ModalsState;
+    },
+    data(): DataState {
+      return this.$store.state.data as DataState;
+    },
+    liked(): LikedState {
+      return this.$store.state.liked as LikedState;
+    },
     show: {
-      get() {
+      get(): boolean {
         return this.modals.addTrackToPlaylistModal.show;
       },
-      set(value) {
+      set(value: boolean) {
         this.updateModal({
           modalName: 'addTrackToPlaylistModal',
           key: 'show',
@@ -65,7 +98,7 @@ export default {
         }
       },
     },
-    ownPlaylists() {
+    ownPlaylists(): Playlist[] {
       return this.liked.playlists.filter(
         p =>
           p.creator.userId === this.data.user.userId &&
@@ -74,12 +107,17 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['updateModal']),
-    ...mapActions(['showToast']),
+    resizeImage,
+    updateModal(payload: { modalName: string; key: string; value: unknown }) {
+      this.$store.commit('updateModal', payload);
+    },
+    showToast(text: string) {
+      return this.$store.dispatch('showToast', text);
+    },
     close() {
       this.show = false;
     },
-    addTrackToPlaylist(playlistID) {
+    addTrackToPlaylist(playlistID: TrackId) {
       addOrRemoveTrackFromPlaylist({
         op: 'add',
         pid: playlistID,
@@ -87,7 +125,7 @@ export default {
       }).then(data => {
         if (data.body.code === 200) {
           this.show = false;
-          this.showToast(locale.t('toast.savedToPlaylist'));
+          this.showToast(locale.global.t('toast.savedToPlaylist'));
         } else {
           this.showToast(data.body.message);
         }
@@ -107,7 +145,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

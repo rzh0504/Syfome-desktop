@@ -28,14 +28,30 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import NProgress from 'nprogress';
 import { homeAlbumsByType, homeAllArtists } from '@/api/others';
 import CoverRow from '@/components/CoverRow.vue';
 import SvgIcon from '@/components/SvgIcon.vue';
 import { dailyShuffle } from '@/utils/dailyRandom';
 
-const CATALOG_MAP = {
+type CatalogItem = {
+  id: string | number;
+  name: string;
+  [key: string]: any;
+};
+
+type Catalog = {
+  title: string;
+  description: string;
+  itemType: 'album' | 'artist';
+  subText: string;
+  columnNumber: number;
+  albumType: 'newest' | 'recent' | 'random' | 'frequent' | null;
+};
+
+const CATALOG_MAP: Record<string, Catalog> = {
   'newest-albums': {
     title: '最近添加专辑',
     description: '按服务器最新入库顺序展示',
@@ -78,10 +94,14 @@ const CATALOG_MAP = {
   },
 };
 
-export default {
+export default defineComponent({
   name: 'HomeCatalog',
   components: { CoverRow, SvgIcon },
-  inject: ['restoreMainScrollPosition'],
+  inject: {
+    restoreMainScrollPosition: {
+      default: () => {},
+    },
+  },
   data() {
     return {
       show: false,
@@ -89,17 +109,19 @@ export default {
       hasMore: true,
       pageSize: 18,
       offset: 0,
-      items: [],
-      allArtists: [],
+      items: [] as CatalogItem[],
+      allArtists: [] as CatalogItem[],
     };
   },
   computed: {
-    catalog() {
+    catalog(): Catalog {
+      const kind = this.$route.params.kind;
+      const key = Array.isArray(kind) ? kind[0] : kind;
       return (
-        CATALOG_MAP[this.$route.params.kind] || CATALOG_MAP['random-albums']
+        CATALOG_MAP[key || 'random-albums'] || CATALOG_MAP['random-albums']
       );
     },
-    isArtistCatalog() {
+    isArtistCatalog(): boolean {
       return this.catalog.itemType === 'artist';
     },
   },
@@ -110,10 +132,10 @@ export default {
   },
   activated() {
     this.loadCatalog(true);
-    this.restoreMainScrollPosition();
+    (this.restoreMainScrollPosition as () => void)();
   },
   methods: {
-    loadCatalog(reset = true) {
+    loadCatalog(reset = true): void {
       if (this.loading) return;
       this.loading = true;
 
@@ -142,7 +164,9 @@ export default {
           NProgress.done();
         });
     },
-    loadAlbumCatalog() {
+    loadAlbumCatalog(): Promise<void> {
+      if (this.catalog.albumType === null) return Promise.resolve();
+
       return homeAlbumsByType({
         type: this.catalog.albumType,
         limit: this.pageSize,
@@ -163,7 +187,7 @@ export default {
         this.hasMore = Boolean(hasMore);
       });
     },
-    loadArtistCatalog(reset = true) {
+    loadArtistCatalog(reset = true): Promise<void> {
       const loadArtists =
         this.allArtists.length === 0
           ? homeAllArtists().then(({ artists = [] }) => {
@@ -186,7 +210,7 @@ export default {
       this.$router.push({ name: 'home' });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

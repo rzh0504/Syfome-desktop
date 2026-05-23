@@ -3,7 +3,7 @@
     <img :src="nextTrackCover" style="display: none" loading="lazy" />
     <img
       class="cover"
-      :src="$filters.resizeImage(track.album && track.album.picUrl, 512)"
+      :src="resizeImage(track.album?.picUrl || '', 512)"
       loading="lazy"
       @click="goToAlbum"
     />
@@ -34,14 +34,41 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import ButtonIcon from '@/components/ButtonIcon.vue';
 import ArtistsInLine from '@/components/ArtistsInLine.vue';
-import { mapState } from 'vuex';
 import * as Vibrant from 'node-vibrant/dist/vibrant.worker.min.js';
 import Color from 'color';
+import { resizeImage } from '@/utils/filters';
+import type { ArtistSummary, Track, TrackId } from '@/types/music';
 
-export default {
+type FMTrack = Track & {
+  album?: {
+    id?: TrackId;
+    picUrl?: string;
+  };
+};
+
+type PlayerLike = {
+  personalFMTrack?: FMTrack;
+  _personalFMNextTrack?: FMTrack;
+  playing?: boolean;
+  isPersonalFM?: boolean;
+  playPersonalFM: () => void;
+  playNextFMTrack: () => void;
+  moveToFMTrash: () => void;
+};
+
+type PaletteLike = {
+  Vibrant?: {
+    _rgb: [number, number, number];
+  };
+};
+
+const emptyTrack: FMTrack = { id: 0, name: '', album: { id: 0, picUrl: '' } };
+
+export default defineComponent({
   name: 'FMCard',
   components: { ButtonIcon, ArtistsInLine },
   data() {
@@ -50,18 +77,20 @@ export default {
     };
   },
   computed: {
-    ...mapState(['player']),
-    track() {
-      return this.player.personalFMTrack;
+    player(): PlayerLike {
+      return this.$store.state.player as PlayerLike;
     },
-    isPlaying() {
+    track(): FMTrack {
+      return this.player.personalFMTrack || emptyTrack;
+    },
+    isPlaying(): boolean {
       return this.player.playing && this.player.isPersonalFM;
     },
-    artists() {
+    artists(): ArtistSummary[] {
       return this.track.artists || this.track.ar || [];
     },
-    nextTrackCover() {
-      return `${this.player._personalFMNextTrack?.album?.picUrl.replace(
+    nextTrackCover(): string {
+      return `${(this.player._personalFMNextTrack?.album?.picUrl || '').replace(
         'http://',
         'https://'
       )}?param=512y512`;
@@ -74,31 +103,33 @@ export default {
   },
   created() {
     this.getColor();
-    window.ok = this.getColor;
   },
   methods: {
-    play() {
+    resizeImage,
+    play(): void {
       this.player.playPersonalFM();
     },
-    next() {
+    next(): void {
       this.player.playNextFMTrack();
     },
-    goToAlbum() {
-      if (this.track.album.id === 0) return;
+    goToAlbum(): void {
+      if (!this.track.album?.id || this.track.album.id === 0) return;
       this.$router.push({ path: '/album/' + this.track.album.id });
     },
-    moveToFMTrash() {
+    moveToFMTrash(): void {
       this.player.moveToFMTrash();
     },
-    getColor() {
+    getColor(): void {
       if (!this.player.personalFMTrack?.album?.picUrl) return;
       const cover = `${this.player.personalFMTrack.album.picUrl.replace(
         'http://',
         'https://'
       )}?param=512y512`;
-      Vibrant.from(cover, { colorCount: 1 })
+      (Vibrant as any)
+        .from(cover, { colorCount: 1 })
         .getPalette()
-        .then(palette => {
+        .then((palette: PaletteLike) => {
+          if (!palette.Vibrant) return;
           const color = Color.rgb(palette.Vibrant._rgb)
             .darken(0.1)
             .rgb()
@@ -112,7 +143,7 @@ export default {
         });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

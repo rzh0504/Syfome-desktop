@@ -7,12 +7,26 @@ type PlaylistParams = {
 
 type CreatePlaylistParams = {
   name: string;
+  type?: number;
 };
 
 type UpdatePlaylistTracksParams = {
   op: string;
   pid: TrackId;
   tracks: TrackId;
+};
+
+type CreatePlaylistResult = {
+  code: number;
+  id?: TrackId;
+};
+
+type UpdatePlaylistTracksResult = {
+  code: number;
+  body: {
+    code: number;
+    message?: string;
+  };
 };
 
 /**
@@ -148,7 +162,9 @@ export function deletePlaylist(id: TrackId) {
  * @param {string} params.type
  */
 export function createPlaylist(params: CreatePlaylistParams) {
-  return getActiveProvider().createPlaylist(params.name);
+  return getActiveProvider().createPlaylist(
+    params.name
+  ) as Promise<CreatePlaylistResult>;
 }
 
 /**
@@ -163,7 +179,9 @@ export function createPlaylist(params: CreatePlaylistParams) {
 export function addOrRemoveTrackFromPlaylist(
   params: UpdatePlaylistTracksParams
 ) {
-  return getActiveProvider().updatePlaylistTracks(params);
+  return getActiveProvider().updatePlaylistTracks(
+    params
+  ) as Promise<UpdatePlaylistTracksResult>;
 }
 
 /**
