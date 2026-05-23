@@ -22,18 +22,13 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 // icons by https://github.com/microsoft/vscode-codicons
-import 'vscode-codicons/dist/codicon.css';
+import '@vscode/codicons/dist/codicon.css';
 
-import { mapState } from 'vuex';
+import { defineComponent } from 'vue';
 
-const electron =
-  process.env.IS_ELECTRON === true ? window.require('electron') : null;
-const ipcRenderer =
-  process.env.IS_ELECTRON === true ? electron.ipcRenderer : null;
-
-export default {
+export default defineComponent({
   name: 'Win32Titlebar',
   data() {
     return {
@@ -41,27 +36,29 @@ export default {
     };
   },
   computed: {
-    ...mapState(['title']),
+    title(): string {
+      return this.$store.state.title as string;
+    },
   },
   created() {
-    if (process.env.IS_ELECTRON === true) {
-      ipcRenderer.on('isMaximized', (_, value) => {
+    if (window.electronAPI) {
+      window.electronAPI.on('isMaximized', value => {
         this.isMaximized = value;
       });
     }
   },
   methods: {
     windowMinimize() {
-      ipcRenderer.send('minimize');
+      window.electronAPI?.send('minimize');
     },
     windowMaxRestore() {
-      ipcRenderer.send('maximizeOrUnmaximize');
+      window.electronAPI?.send('maximizeOrUnmaximize');
     },
     windowClose() {
-      ipcRenderer.send('close');
+      window.electronAPI?.send('close');
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

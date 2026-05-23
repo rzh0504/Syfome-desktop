@@ -1,6 +1,7 @@
 .DS_Store
 node_modules
 /dist
+/out
 
 # local env files
 .env
@@ -26,6 +27,7 @@ pnpm-debug.log*
 
 #Electron-builder output
 /dist_electron
+/dist_migration_verify
 NeteaseCloudMusicApi-master
 NeteaseCloudMusicApi-master.zip
 
@@ -41,3 +43,6 @@ devenv.local.nix
 
 # pre-commit
 .pre-commit-config.yaml
+
+# migration notes
+/docs/migration-vite-vue3-pnpm.md

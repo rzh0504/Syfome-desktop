@@ -3,7 +3,7 @@
     <div class="playlist-info">
       <Cover
         :id="album.id"
-        :image-url="album.picUrl | resizeImage(1024)"
+        :image-url="resizeImage(album.picUrl, 1024)"
         :show-play-button="true"
         :always-show-shadow="true"
         :click-cover-to-play="true"
@@ -11,7 +11,7 @@
         type="album"
         :cover-hover="false"
         :play-button-size="18"
-        @click.right.native="openMenu"
+        @click.right="openMenu"
       />
       <div class="info">
         <div class="title" @click.right="openMenu"> {{ title }}</div>
@@ -20,7 +20,7 @@
         }}</div>
         <div class="artist">
           <span v-if="album.artist.id !== 104700">
-            <span>{{ album.type | formatAlbumType(album) }} by </span
+            <span>{{ formatAlbumType(album.type, album) }} by </span
             ><router-link :to="`/artist/${album.artist.id}`">{{
               album.artist.name
             }}</router-link></span
@@ -33,21 +33,18 @@
             class="explicit-symbol"
             ><ExplicitSymbol
           /></span>
-          <span :title="album.publishTime | formatDate">{{
+          <span :title="formatDate(album.publishTime)">{{
             new Date(album.publishTime).getFullYear()
           }}</span>
           <span> · {{ album.size }} {{ $t('common.songs') }}</span
           >,
-          {{ albumTime | formatTime('Human') }}
+          {{ formatTime(albumTime, 'Human') }}
         </div>
         <div class="description" @click="toggleFullDescription">
           {{ album.description }}
         </div>
         <div class="buttons" style="margin-top: 32px">
-          <ButtonTwoTone
-            icon-class="play"
-            @click.native="playAlbumByID(album.id)"
-          >
+          <ButtonTwoTone icon-class="play" @click="playAlbumByID(album.id)">
             {{ $t('common.play') }}
           </ButtonTwoTone>
           <ButtonTwoTone
@@ -59,7 +56,7 @@
             :background-color="
               dynamicDetail.isSub ? 'var(--color-secondary-bg)' : ''
             "
-            @click.native="likeAlbum"
+            @click="likeAlbum"
           >
           </ButtonTwoTone>
           <ButtonTwoTone
@@ -67,7 +64,7 @@
             :icon-button="true"
             :horizontal-padding="0"
             color="grey"
-            @click.native="openMenu"
+            @click="openMenu"
           >
           </ButtonTwoTone>
         </div>
@@ -96,7 +93,7 @@
       <div class="album-time"></div>
       <div class="release-date">
         {{ $t('album.released') }}
-        {{ album.publishTime | formatDate('MMMM D, YYYY') }}
+        {{ formatDate(album.publishTime, 'MMMM D, YYYY') }}
       </div>
       <div v-if="album.company" class="copyright"> © {{ album.company }} </div>
     </div>
@@ -144,8 +141,8 @@
   </div>
 </template>
 
-<script>
-import { mapMutations, mapActions, mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { getArtistAlbum } from '@/api/artist';
 import { getTrackDetail } from '@/api/track';
 import { getAlbum, albumDynamicDetail, likeAAlbum } from '@/api/album';
@@ -154,6 +151,14 @@ import { splitSoundtrackAlbumTitle, splitAlbumTitle } from '@/utils/common';
 import NProgress from 'nprogress';
 import { isAccountLoggedIn } from '@/utils/auth';
 import { groupBy, toPairs, sortBy } from 'lodash';
+import {
+  formatAlbumType,
+  formatDate,
+  formatTime,
+  resizeImage,
+} from '@/utils/filters';
+import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
+import type { Track, TrackId } from '@/types/music';
 
 import ExplicitSymbol from '@/components/ExplicitSymbol.vue';
 import ButtonTwoTone from '@/components/ButtonTwoTone.vue';
@@ -163,7 +168,50 @@ import CoverRow from '@/components/CoverRow.vue';
 import Cover from '@/components/Cover.vue';
 import Modal from '@/components/Modal.vue';
 
-export default {
+type AlbumArtist = {
+  id: TrackId;
+  name: string;
+};
+
+type AlbumDetail = {
+  id: TrackId;
+  picUrl: string;
+  artist: AlbumArtist;
+  name: string;
+  type?: string;
+  mark?: number;
+  publishTime?: string | number | Date;
+  size?: number;
+  description?: string;
+  company?: string;
+};
+
+type DynamicDetail = {
+  isSub: boolean;
+  commentCount?: number;
+  shareCount?: number;
+  subCount?: number;
+};
+
+type DiscTracks = {
+  disc: string;
+  tracks: Track[];
+};
+
+type PlayerLike = {
+  playAlbumByID: (id: TrackId, trackID?: TrackId | 'first') => void;
+};
+
+type ContextMenuInstance = {
+  openMenu: (event: MouseEvent) => void;
+};
+
+function routeId(route: RouteLocationNormalized): TrackId {
+  const id = route.params.id;
+  return Array.isArray(id) ? id[0] : id;
+}
+
+export default defineComponent({
   name: 'Album',
   components: {
     Cover,
@@ -174,9 +222,13 @@ export default {
     Modal,
     ContextMenu,
   },
-  beforeRouteUpdate(to, from, next) {
+  beforeRouteUpdate(
+    to: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
+    next: NavigationGuardNext
+  ) {
     this.show = false;
-    this.loadData(to.params.id);
+    this.loadData(routeId(to));
     next();
   },
   data() {
@@ -184,33 +236,38 @@ export default {
       show: false,
       album: {
         id: 0,
+        name: '',
         picUrl: '',
         artist: {
           id: 0,
+          name: '',
         },
-      },
-      tracks: [],
+      } as AlbumDetail,
+      tracks: [] as Track[],
       showFullDescription: false,
-      moreAlbums: [],
-      dynamicDetail: {},
+      moreAlbums: [] as AlbumDetail[],
+      dynamicDetail: { isSub: false } as DynamicDetail,
       subtitle: '',
       title: '',
     };
   },
   computed: {
-    ...mapState(['player', 'data']),
-    albumTime() {
-      let time = 0;
-      this.tracks.map(t => (time = time + t.dt));
-      return time;
+    player(): PlayerLike {
+      return this.$store.state.player as PlayerLike;
     },
-    filteredMoreAlbums() {
-      let moreAlbums = this.moreAlbums.filter(a => a.id !== this.album.id);
-      let realAlbums = moreAlbums.filter(a => a.type === '专辑');
-      let eps = moreAlbums.filter(
+    albumTime(): number {
+      return this.tracks.reduce(
+        (time, track) => time + Number(track.dt || 0),
+        0
+      );
+    },
+    filteredMoreAlbums(): AlbumDetail[] {
+      const moreAlbums = this.moreAlbums.filter(a => a.id !== this.album.id);
+      const realAlbums = moreAlbums.filter(a => a.type === '专辑');
+      const eps = moreAlbums.filter(
         a => a.type === 'EP' || (a.type === 'EP/Single' && a.size > 1)
       );
-      let restItems = moreAlbums.filter(
+      const restItems = moreAlbums.filter(
         a =>
           realAlbums.find(a1 => a1.id === a.id) === undefined &&
           eps.find(a1 => a1.id === a.id) === undefined
@@ -221,7 +278,7 @@ export default {
         return [...realAlbums, ...restItems].slice(0, 5);
       }
     },
-    tracksByDisc() {
+    tracksByDisc(): DiscTracks[] {
       if (this.tracks.length <= 1) return [];
       const pairs = toPairs(groupBy(this.tracks, 'cd'));
       return sortBy(pairs, p => p[0]).map(items => ({
@@ -231,17 +288,31 @@ export default {
     },
   },
   created() {
-    this.loadData(this.$route.params.id);
+    this.loadData(routeId(this.$route));
   },
   methods: {
-    ...mapMutations(['appendTrackToPlayerList']),
-    ...mapActions(['playFirstTrackOnList', 'playTrackOnListByID', 'showToast']),
-    playAlbumByID(id, trackID = 'first') {
-      this.$store.state.player.playAlbumByID(id, trackID);
+    formatAlbumType,
+    formatDate,
+    formatTime,
+    resizeImage,
+    appendTrackToPlayerList(payload: unknown) {
+      this.$store.commit('appendTrackToPlayerList', payload);
     },
-    likeAlbum(toast = false) {
+    playFirstTrackOnList(payload: unknown) {
+      return this.$store.dispatch('playFirstTrackOnList', payload);
+    },
+    playTrackOnListByID(payload: unknown) {
+      return this.$store.dispatch('playTrackOnListByID', payload);
+    },
+    showToast(text: string) {
+      return this.$store.dispatch('showToast', text);
+    },
+    playAlbumByID(id: TrackId, trackID: TrackId | 'first' = 'first') {
+      this.player.playAlbumByID(id, trackID);
+    },
+    likeAlbum(toast = false): void {
       if (!isAccountLoggedIn()) {
-        this.showToast(locale.t('toast.needToLogin'));
+        this.showToast(locale.global.t('toast.needToLogin'));
         return;
       }
       likeAAlbum({
@@ -258,12 +329,12 @@ export default {
           }
         })
         .catch(error => {
-          this.showToast(`${error.response.data.message || error}`);
+          this.showToast(`${error.response?.data?.message || error}`);
         });
     },
-    formatTitle() {
-      let splitTitle = splitSoundtrackAlbumTitle(this.album.name);
-      let splitTitle2 = splitAlbumTitle(splitTitle.title);
+    formatTitle(): void {
+      const splitTitle = splitSoundtrackAlbumTitle(this.album.name || '');
+      const splitTitle2 = splitAlbumTitle(splitTitle.title);
       this.title = splitTitle2.title;
       if (splitTitle.subtitle !== '' && splitTitle2.subtitle !== '') {
         this.subtitle = splitTitle.subtitle + ' · ' + splitTitle2.subtitle;
@@ -274,7 +345,7 @@ export default {
             : splitTitle.subtitle;
       }
     },
-    loadData(id) {
+    loadData(id: TrackId): void {
       setTimeout(() => {
         if (!this.show) NProgress.start();
       }, 1000);
@@ -286,21 +357,21 @@ export default {
         this.show = true;
 
         // to get explicit mark
-        let trackIDs = this.tracks.map(t => t.id);
+        const trackIDs = this.tracks.map(t => t.id);
         getTrackDetail(trackIDs.join(',')).then(data => {
-          this.tracks = data.songs;
+          this.tracks = data.songs as Track[];
         });
 
         // get more album by this artist
         getArtistAlbum({ id: this.album.artist.id, limit: 100 }).then(data => {
-          this.moreAlbums = data.hotAlbums;
+          this.moreAlbums = data.hotAlbums as AlbumDetail[];
         });
       });
       albumDynamicDetail(id).then(data => {
         this.dynamicDetail = data;
       });
     },
-    toggleFullDescription() {
+    toggleFullDescription(): void {
       this.showFullDescription = !this.showFullDescription;
       if (this.showFullDescription) {
         this.$store.commit('enableScrolling', false);
@@ -308,25 +379,25 @@ export default {
         this.$store.commit('enableScrolling', true);
       }
     },
-    openMenu(e) {
-      this.$refs.albumMenu.openMenu(e);
+    openMenu(e: MouseEvent): void {
+      (this.$refs.albumMenu as ContextMenuInstance).openMenu(e);
     },
-    copyUrl(id) {
-      let showToast = this.showToast;
+    copyUrl(id: TrackId): void {
+      const showToast = this.showToast;
       this.$copyText(`${window.location.origin}/#/album/${id}`)
         .then(function () {
-          showToast(locale.t('toast.copied'));
+          showToast(locale.global.t('toast.copied'));
         })
         .catch(error => {
-          showToast(`${locale.t('toast.copyFailed')}${error}`);
+          showToast(`${locale.global.t('toast.copyFailed')}${error}`);
         });
     },
-    openInBrowser(id) {
+    openInBrowser(id: TrackId): void {
       const url = `${window.location.origin}/#/album/${id}`;
       window.open(url);
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

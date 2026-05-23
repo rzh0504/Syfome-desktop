@@ -6,7 +6,7 @@
     title="新建歌单"
     width="25vw"
   >
-    <template slot="default">
+    <template #default>
       <input
         v-model="title"
         type="text"
@@ -22,19 +22,29 @@
         <label for="checkbox-private">设置为隐私歌单</label>
       </div>
     </template>
-    <template slot="footer">
+    <template #footer>
       <button class="primary block" @click="createPlaylist">创建</button>
     </template>
   </Modal>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import Modal from '@/components/Modal.vue';
 import locale from '@/locale';
-import { mapMutations, mapState, mapActions } from 'vuex';
 import { createPlaylist, addOrRemoveTrackFromPlaylist } from '@/api/playlist';
+import type { TrackId } from '@/types/music';
 
-export default {
+type NewPlaylistModalState = {
+  show: boolean;
+  afterCreateAddTrackID: TrackId | 0;
+};
+
+type ModalsState = {
+  newPlaylistModal: NewPlaylistModalState;
+};
+
+export default defineComponent({
   name: 'ModalNewPlaylist',
   components: {
     Modal,
@@ -46,12 +56,14 @@ export default {
     };
   },
   computed: {
-    ...mapState(['modals']),
+    modals(): ModalsState {
+      return this.$store.state.modals as ModalsState;
+    },
     show: {
-      get() {
+      get(): boolean {
         return this.modals.newPlaylistModal.show;
       },
-      set(value) {
+      set(value: boolean) {
         this.updateModal({
           modalName: 'newPlaylistModal',
           key: 'show',
@@ -66,8 +78,18 @@ export default {
     },
   },
   methods: {
-    ...mapMutations(['updateModal', 'updateData']),
-    ...mapActions(['showToast', 'fetchLikedPlaylist']),
+    updateModal(payload: { modalName: string; key: string; value: unknown }) {
+      this.$store.commit('updateModal', payload);
+    },
+    updateData(payload: { key: string; value: unknown }) {
+      this.$store.commit('updateData', payload);
+    },
+    showToast(text: string) {
+      return this.$store.dispatch('showToast', text);
+    },
+    fetchLikedPlaylist() {
+      return this.$store.dispatch('fetchLikedPlaylist');
+    },
     close() {
       this.show = false;
       this.title = '';
@@ -75,18 +97,21 @@ export default {
       this.resetAfterCreateAddTrackID();
     },
     createPlaylist() {
-      let params = { name: this.title };
-      if (this.private) params.type = 10;
+      const params: { name: string; type?: number } = { name: this.title };
+      if (this.privatePlaylist) params.type = 10;
       createPlaylist(params).then(data => {
         if (data.code === 200) {
-          if (this.modals.newPlaylistModal.afterCreateAddTrackID !== 0) {
+          if (
+            data.id !== undefined &&
+            this.modals.newPlaylistModal.afterCreateAddTrackID !== 0
+          ) {
             addOrRemoveTrackFromPlaylist({
               op: 'add',
               pid: data.id,
               tracks: this.modals.newPlaylistModal.afterCreateAddTrackID,
             }).then(data => {
               if (data.body.code === 200) {
-                this.showToast(locale.t('toast.savedToPlaylist'));
+                this.showToast(locale.global.t('toast.savedToPlaylist'));
               } else {
                 this.showToast(data.body.message);
               }
@@ -108,7 +133,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

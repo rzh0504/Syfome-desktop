@@ -14,10 +14,14 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 
-export default {
+type ParentWithCloseMenu = {
+  closeMenu?: () => void;
+};
+
+export default defineComponent({
   name: 'ContextMenu',
   data() {
     return {
@@ -27,14 +31,18 @@ export default {
     };
   },
   computed: {
-    ...mapState(['player']),
+    player(): { enabled?: boolean } {
+      return this.$store.state.player as { enabled?: boolean };
+    },
   },
   methods: {
-    setMenu(top, left) {
-      let heightOffset = this.player.enabled ? 64 : 0;
-      let largestHeight =
-        window.innerHeight - this.$refs.menu.offsetHeight - heightOffset;
-      let largestWidth = window.innerWidth - this.$refs.menu.offsetWidth - 25;
+    setMenu(top: number, left: number) {
+      const menu = this.$refs.menu as HTMLElement | undefined;
+      if (!menu) return;
+
+      const heightOffset = this.player.enabled ? 64 : 0;
+      let largestHeight = window.innerHeight - menu.offsetHeight - heightOffset;
+      let largestWidth = window.innerWidth - menu.offsetWidth - 25;
       if (top > largestHeight) top = largestHeight;
       if (left > largestWidth) left = largestWidth;
       this.top = top + 'px';
@@ -43,25 +51,25 @@ export default {
 
     closeMenu() {
       this.showMenu = false;
-      if (this.$parent.closeMenu !== undefined) {
-        this.$parent.closeMenu();
+      const parent = this.$parent as ParentWithCloseMenu | undefined;
+      if (parent?.closeMenu !== undefined) {
+        parent.closeMenu();
       }
       this.$store.commit('enableScrolling', true);
     },
 
-    openMenu(e) {
+    openMenu(e: MouseEvent) {
       this.showMenu = true;
-      this.$nextTick(
-        function () {
-          this.$refs.menu.focus();
-          this.setMenu(e.y, e.x);
-        }.bind(this)
-      );
+      this.$nextTick(() => {
+        const menu = this.$refs.menu as HTMLElement | undefined;
+        menu?.focus();
+        this.setMenu(e.y, e.x);
+      });
       e.preventDefault();
       this.$store.commit('enableScrolling', false);
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>
@@ -100,7 +108,7 @@ export default {
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
   }
-  .menu .item:hover {
+  .menu :deep(.item:hover) {
     color: var(--color-text);
   }
 }
@@ -111,7 +119,7 @@ export default {
   }
 }
 
-.menu .item {
+.menu :deep(.item) {
   font-weight: 600;
   font-size: 14px;
   padding: 10px 14px;
@@ -137,7 +145,7 @@ export default {
   }
 }
 
-hr {
+.menu :deep(hr) {
   margin: 4px 10px;
   background: rgba(128, 128, 128, 0.18);
   height: 1px;
@@ -145,7 +153,7 @@ hr {
   border: none;
 }
 
-.item-info {
+.menu :deep(.item-info) {
   padding: 10px 10px;
   display: flex;
   align-items: center;

@@ -3,9 +3,9 @@
     {{ computedPrefix }}
     <span v-for="(ar, index) in filteredArtists" :key="index">
       <router-link v-if="ar.id !== 0" :to="`/artist/${ar.id}`">{{
-        ar.name
+        ar.name || ''
       }}</router-link>
-      <span v-else>{{ ar.name }}</span>
+      <span v-else>{{ ar.name || '' }}</span>
       <span v-if="index !== filteredArtists.length - 1" class="separator"
         >,</span
       >
@@ -13,12 +13,20 @@
   </span>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+import type { PropType } from 'vue';
+
+type Artist = {
+  id?: string | number;
+  name?: string;
+};
+
+export default defineComponent({
   name: 'ArtistInLine',
   props: {
     artists: {
-      type: Array,
+      type: Array as PropType<Artist[]>,
       required: true,
     },
     exclude: {
@@ -31,15 +39,15 @@ export default {
     },
   },
   computed: {
-    filteredArtists() {
+    filteredArtists(): Artist[] {
       return this.artists.filter(a => a.name !== this.exclude);
     },
-    computedPrefix() {
+    computedPrefix(): string {
       if (this.filteredArtists.length !== 0) return this.prefix;
       else return '';
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

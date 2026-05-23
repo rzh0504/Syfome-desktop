@@ -1,0 +1,31 @@
+packages:
+  - .
+
+overrides:
+  icon-gen: 3.0.0
+  degenerator: 2.2.0
+  electron-builder: ^26.8.1
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - core-js
+  - ejs
+  - electron
+  - es5-ext
+  - esbuild
+  - husky
+  - sharp
+  - yorkie
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  core-js: true
+  ejs: true
+  electron: true
+  es5-ext: true
+  esbuild: true
+  husky: true
+  sharp: true
+  yorkie: true

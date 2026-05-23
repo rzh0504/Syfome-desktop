@@ -6,7 +6,7 @@
     >
       <Cover
         :id="playlist.id"
-        :image-url="playlist.coverImgUrl | resizeImage(1024)"
+        :image-url="$filters.resizeImage(playlist.coverImgUrl, 1024)"
         :show-play-button="true"
         :always-show-shadow="true"
         :click-cover-to-play="true"
@@ -14,7 +14,7 @@
         type="playlist"
         :cover-hover="false"
         :play-button-size="18"
-        @click.right.native="openMenu"
+        @click.right="openMenu"
       />
       <div class="info">
         <div class="title" @click.right="openMenu"
@@ -28,14 +28,15 @@
         </div>
         <div class="date-and-count">
           {{ $t('playlist.updatedAt') }}
-          {{ playlist.updateTime | formatDate }} · {{ playlist.trackCount }}
+          {{ $filters.formatDate(playlist.updateTime) }} ·
+          {{ playlist.trackCount }}
           {{ $t('common.songs') }}
         </div>
         <div class="description" @click="toggleFullDescription">
           {{ playlist.description }}
         </div>
         <div class="buttons">
-          <ButtonTwoTone icon-class="play" @click.native="playPlaylistByID()">
+          <ButtonTwoTone icon-class="play" @click="playPlaylistByID()">
             {{ $t('common.play') }}
           </ButtonTwoTone>
           <ButtonTwoTone
@@ -48,7 +49,7 @@
             :background-color="
               playlist.subscribed ? 'var(--color-secondary-bg)' : ''
             "
-            @click.native="likePlaylist"
+            @click="likePlaylist"
           >
           </ButtonTwoTone>
           <ButtonTwoTone
@@ -56,7 +57,7 @@
             :icon-button="true"
             :horizontal-padding="0"
             color="grey"
-            @click.native="openMenu"
+            @click="openMenu"
           >
           </ButtonTwoTone>
         </div>
@@ -83,7 +84,7 @@
         :class="specialPlaylistInfo.gradient"
         @click.right="openMenu"
       >
-        <!-- <img :src="playlist.coverImgUrl | resizeImage" /> -->
+        <!-- <img :src="$filters.resizeImage(playlist.coverImgUrl)" /> -->
         {{ specialPlaylistInfo.name }}
       </div>
       <div class="subtitle"
@@ -95,7 +96,7 @@
           class="play-button"
           icon-class="play"
           color="grey"
-          @click.native="playPlaylistByID()"
+          @click="playPlaylistByID()"
         >
           {{ $t('common.play') }}
         </ButtonTwoTone>
@@ -109,7 +110,7 @@
           :background-color="
             playlist.subscribed ? 'var(--color-secondary-bg)' : ''
           "
-          @click.native="likePlaylist"
+          @click="likePlaylist"
         >
         </ButtonTwoTone>
         <ButtonTwoTone
@@ -117,7 +118,7 @@
           :icon-button="true"
           :horizontal-padding="0"
           color="grey"
-          @click.native="openMenu"
+          @click="openMenu"
         >
         </ButtonTwoTone>
       </div>
@@ -127,7 +128,7 @@
       <h1>
         <img
           class="avatar"
-          :src="data.user.avatarUrl | resizeImage"
+          :src="$filters.resizeImage(data.user.avatarUrl)"
           loading="lazy"
         />
         {{ data.user.nickname }}{{ $t('library.sLikedSongs') }}
@@ -164,7 +165,7 @@
         v-show="hasMore"
         color="grey"
         :loading="loadingMore"
-        @click.native="loadMore(100)"
+        @click="loadMore(100)"
         >{{ $t('explore.loadMore') }}</ButtonTwoTone
       >
     </div>
@@ -204,7 +205,9 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
+import type { NavigationGuardNext } from 'vue-router';
 import { mapMutations, mapActions, mapState } from 'vuex';
 import NProgress from 'nprogress';
 import {
@@ -222,8 +225,32 @@ import ContextMenu from '@/components/ContextMenu.vue';
 import TrackList from '@/components/TrackList.vue';
 import Cover from '@/components/Cover.vue';
 import Modal from '@/components/Modal.vue';
+import type { TrackId, TrackListTrack } from '@/types/music';
 
-const specialPlaylist = {
+type PlaylistTrack = TrackListTrack;
+
+type PlaylistLike = {
+  id: TrackId;
+  name?: string;
+  coverImgUrl?: string;
+  creator: { userId?: TrackId; nickname?: string };
+  trackIds: Array<{ id: TrackId }>;
+  tracks?: PlaylistTrack[];
+  trackCount?: number;
+  subscribed?: boolean;
+  privacy?: number;
+  updateTime?: number;
+  description?: string;
+};
+
+type ContextMenuInstance = {
+  openMenu: (e: MouseEvent) => void;
+};
+
+const specialPlaylist: Record<
+  string | number,
+  { name: string; gradient: string }
+> = {
   2829816518: {
     name: '欧美私人订制',
     gradient: 'gradient-pink-purple-blue',
@@ -314,7 +341,7 @@ const specialPlaylist = {
   },
 };
 
-export default {
+export default defineComponent({
   name: 'Playlist',
   components: {
     Cover,
@@ -325,13 +352,14 @@ export default {
   },
   directives: {
     focus: {
-      inserted: function (el) {
+      mounted: function (el) {
         el.focus();
       },
     },
   },
   data() {
     return {
+      id: 0 as TrackId,
       show: false,
       playlist: {
         id: 0,
@@ -340,9 +368,9 @@ export default {
           userId: '',
         },
         trackIds: [],
-      },
+      } as PlaylistLike,
       showFullDescription: false,
-      tracks: [],
+      tracks: [] as PlaylistTrack[],
       loadingMore: false,
       hasMore: false,
       lastLoadedTrackIndex: 9,
@@ -350,36 +378,36 @@ export default {
       searchKeyWords: '', // 搜索使用的关键字
       inputSearchKeyWords: '', // 搜索框中正在输入的关键字
       inputFocus: false,
-      debounceTimeout: null,
+      debounceTimeout: null as ReturnType<typeof setTimeout> | null,
       searchInputWidth: '0px', // 搜索框宽度
     };
   },
   computed: {
     ...mapState(['player', 'data', 'liked']),
-    isLikeSongsPage() {
+    isLikeSongsPage(): boolean {
       return this.$route.name === 'likedSongs';
     },
     specialPlaylistInfo() {
       return specialPlaylist[this.playlist.id];
     },
-    isUserOwnPlaylist() {
+    isUserOwnPlaylist(): boolean {
       return (
         this.playlist.creator.userId === this.data.user.userId &&
         this.playlist.id !== this.data.likedSongPlaylistID
       );
     },
-    filteredTracks() {
+    filteredTracks(): PlaylistTrack[] {
       return this.tracks.filter(
         track =>
           (track.name &&
             track.name
               .toLowerCase()
               .includes(this.searchKeyWords.toLowerCase())) ||
-          (track.al.name &&
+          (track.al?.name &&
             track.al.name
               .toLowerCase()
               .includes(this.searchKeyWords.toLowerCase())) ||
-          track.ar.find(
+          track.ar?.find(
             artist =>
               artist.name &&
               artist.name
@@ -393,7 +421,7 @@ export default {
     if (this.$route.name === 'likedSongs') {
       this.loadLikedSongsData();
     } else {
-      this.loadData(this.$route.params.id);
+      this.loadData(this.$route.params.id as TrackId);
     }
     setTimeout(() => {
       if (!this.show) NProgress.start();
@@ -402,8 +430,8 @@ export default {
   methods: {
     ...mapMutations(['appendTrackToPlayerList']),
     ...mapActions(['playFirstTrackOnList', 'playTrackOnListByID', 'showToast']),
-    playPlaylistByID(trackID = 'first') {
-      let trackIDs = this.playlist.trackIds.map(t => t.id);
+    playPlaylistByID(trackID: TrackId | 'first' = 'first') {
+      const trackIDs = this.playlist.trackIds.map(t => t.id);
       this.$store.state.player.replacePlaylist(
         trackIDs,
         this.playlist.id,
@@ -419,7 +447,7 @@ export default {
       subscribePlaylist({
         id: this.playlist.id,
         t: this.playlist.subscribed ? 2 : 1,
-      }).then(data => {
+      }).then((data: { code: number }) => {
         if (data.code === 200) {
           this.playlist.subscribed = !this.playlist.subscribed;
           if (toast === true)
@@ -428,11 +456,11 @@ export default {
             );
         }
         getPlaylistDetail(this.id, true).then(data => {
-          this.playlist = data.playlist;
+          this.playlist = data.playlist as PlaylistLike;
         });
       });
     },
-    buildLikedSongsPlaylist() {
+    buildLikedSongsPlaylist(): PlaylistLike {
       return {
         id: this.data.likedSongPlaylistID || 'starred',
         name: '我喜欢的音乐',
@@ -443,14 +471,14 @@ export default {
         },
         trackCount: this.liked.songs.length,
         trackIds: this.liked.songs.map(id => ({ id })),
-        tracks: [...this.liked.songsWithDetails],
+        tracks: [...this.liked.songsWithDetails] as PlaylistTrack[],
         subscribed: true,
         privacy: 0,
         updateTime: Date.now(),
         description: '',
       };
     },
-    loadLikedSongsData(next = undefined) {
+    loadLikedSongsData(next?: NavigationGuardNext) {
       this.id = this.data.likedSongPlaylistID || 'starred';
       this.$store
         .dispatch('fetchLikedSongs')
@@ -458,7 +486,7 @@ export default {
         .then(() => this.$store.dispatch('fetchLikedPlaylist'))
         .then(() => {
           this.playlist = this.buildLikedSongsPlaylist();
-          this.tracks = [...this.playlist.tracks];
+          this.tracks = [...(this.playlist.tracks || [])];
           NProgress.done();
           if (next !== undefined) next();
           this.show = true;
@@ -470,18 +498,18 @@ export default {
             this.hasMore = false;
           }
         })
-        .catch(error => {
+        .catch((error: Error) => {
           this.showToast(`读取喜欢歌曲失败：${error.message || error}`);
           NProgress.done();
           this.show = true;
         });
     },
-    loadData(id, next = undefined) {
+    loadData(id: TrackId, next?: NavigationGuardNext) {
       this.id = id;
       getPlaylistDetail(this.id, true)
         .then(data => {
-          this.playlist = data.playlist;
-          this.tracks = data.playlist.tracks;
+          this.playlist = data.playlist as PlaylistLike;
+          this.tracks = data.playlist.tracks as PlaylistTrack[];
           NProgress.done();
           if (next !== undefined) next();
           this.show = true;
@@ -496,17 +524,19 @@ export default {
         });
     },
     loadMore(loadNum = 100) {
-      let trackIDs = this.playlist.trackIds.filter((t, index) => {
-        if (
-          index > this.lastLoadedTrackIndex &&
-          index <= this.lastLoadedTrackIndex + loadNum
-        ) {
-          return t;
-        }
-      });
-      trackIDs = trackIDs.map(t => t.id);
+      const trackIDs = this.playlist.trackIds
+        .filter((_t, index) => {
+          if (
+            index > this.lastLoadedTrackIndex &&
+            index <= this.lastLoadedTrackIndex + loadNum
+          ) {
+            return true;
+          }
+          return false;
+        })
+        .map(t => t.id);
       getTrackDetail(trackIDs.join(',')).then(data => {
-        this.tracks.push(...data.songs);
+        this.tracks.push(...(data.songs as PlaylistTrack[]));
         this.lastLoadedTrackIndex += trackIDs.length;
         this.loadingMore = false;
         if (this.lastLoadedTrackIndex + 1 === this.playlist.trackIds.length) {
@@ -516,8 +546,8 @@ export default {
         }
       });
     },
-    openMenu(e) {
-      this.$refs.playlistMenu.openMenu(e);
+    openMenu(e: MouseEvent) {
+      (this.$refs.playlistMenu as ContextMenuInstance | undefined)?.openMenu(e);
     },
     deletePlaylist() {
       if (!isAccountLoggedIn()) {
@@ -550,7 +580,7 @@ export default {
         this.loadMore(500);
       }
     },
-    removeTrack(trackID) {
+    removeTrack(trackID: TrackId) {
       if (!isAccountLoggedIn()) {
         this.showToast(locale.t('toast.needToLogin'));
         return;
@@ -572,7 +602,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

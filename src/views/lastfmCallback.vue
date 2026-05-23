@@ -10,10 +10,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { authGetSession } from '@/api/lastfm';
 
-export default {
+export default defineComponent({
   name: 'LastfmCallback',
   data() {
     return { message: '请稍等...', done: false };
@@ -42,7 +43,7 @@ export default {
       window.close();
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

@@ -29,31 +29,48 @@
   </div>
 </template>
 
-<script>
-import { mapState, mapActions } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { getTrackDetail } from '@/api/track';
 import TrackList from '@/components/TrackList.vue';
+import type { Track, TrackId } from '@/types/music';
 
-export default {
+type PlayerLike = {
+  currentTrack: Track | null;
+  shuffle: boolean;
+  list: TrackId[];
+  current: number;
+  playNextList: TrackId[];
+  clearPlayNextList: () => void;
+};
+
+export default defineComponent({
   name: 'Next',
   components: {
     TrackList,
   },
+  inject: {
+    restoreMainScrollPosition: {
+      default: () => {},
+    },
+  },
   data() {
     return {
-      tracks: [],
+      tracks: [] as Track[],
     };
   },
   computed: {
-    ...mapState(['player']),
-    currentTrack() {
+    player(): PlayerLike {
+      return this.$store.state.player as PlayerLike;
+    },
+    currentTrack(): Track | null {
       return this.player.currentTrack;
     },
-    playerShuffle() {
+    playerShuffle(): boolean {
       return this.player.shuffle;
     },
-    filteredTracks() {
-      let trackIDs = this.player.list.slice(
+    filteredTracks(): Track[] {
+      const trackIDs = this.player.list.slice(
         this.player.current + 1,
         this.player.current + 100
       );
@@ -61,10 +78,10 @@ export default {
         .map(tid => this.tracks.find(t => t.id === tid))
         .filter(t => t);
     },
-    playNextList() {
+    playNextList(): TrackId[] {
       return this.player.playNextList;
     },
-    playNextTracks() {
+    playNextTracks(): Array<Track | undefined> {
       return this.playNextList.map(tid => {
         return this.tracks.find(t => t.id === tid);
       });
@@ -83,13 +100,15 @@ export default {
   },
   activated() {
     this.loadTracks();
-    this.$parent.$refs.scrollbar.restorePosition();
+    (this.restoreMainScrollPosition as () => void)();
   },
   methods: {
-    ...mapActions(['playTrackOnListByID']),
-    loadTracks() {
+    playTrackOnListByID(payload: unknown) {
+      return this.$store.dispatch('playTrackOnListByID', payload);
+    },
+    loadTracks(): void {
       // 获取播放列表当前歌曲后100首歌
-      let trackIDs = this.player.list.slice(
+      const trackIDs = this.player.list.slice(
         this.player.current + 1,
         this.player.current + 100
       );
@@ -98,11 +117,11 @@ export default {
       trackIDs.push(...this.playNextList);
 
       // 获取已经加载了的歌曲
-      let loadedTrackIDs = this.tracks.map(t => t.id);
+      const loadedTrackIDs = this.tracks.map(t => t.id);
 
       if (trackIDs.length > 0) {
         getTrackDetail(trackIDs.join(',')).then(data => {
-          let newTracks = data.songs.filter(
+          const newTracks = data.songs.filter(
             t => !loadedTrackIDs.includes(t.id)
           );
           this.tracks.push(...newTracks);
@@ -110,7 +129,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

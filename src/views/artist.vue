@@ -2,7 +2,10 @@
   <div v-show="show" class="artist-page">
     <div class="artist-info">
       <div class="head">
-        <img :src="artist.img1v1Url | resizeImage(1024)" loading="lazy" />
+        <img
+          :src="$filters.resizeImage(artist.img1v1Url, 1024)"
+          loading="lazy"
+        />
       </div>
       <div>
         <div class="name">{{ artist.name }}</div>
@@ -20,10 +23,10 @@
           {{ artist.briefDesc }}
         </div>
         <div class="buttons">
-          <ButtonTwoTone icon-class="play" @click.native="playPopularSongs()">
+          <ButtonTwoTone icon-class="play" @click="playPopularSongs()">
             {{ $t('common.play') }}
           </ButtonTwoTone>
-          <ButtonTwoTone color="grey" @click.native="followArtist">
+          <ButtonTwoTone color="grey" @click="followArtist">
             <span v-if="artist.followed">{{ $t('artist.following') }}</span>
             <span v-else>{{ $t('artist.follow') }}</span>
           </ButtonTwoTone>
@@ -32,7 +35,7 @@
             :icon-button="true"
             :horizontal-padding="0"
             color="grey"
-            @click.native="openMenu"
+            @click="openMenu"
           >
           </ButtonTwoTone>
         </div>
@@ -44,7 +47,7 @@
         <div class="container">
           <Cover
             :id="latestRelease.id"
-            :image-url="latestRelease.picUrl | resizeImage"
+            :image-url="$filters.resizeImage(latestRelease.picUrl)"
             type="album"
             :fixed-size="128"
             :play-button-size="30"
@@ -56,11 +59,11 @@
               }}</router-link>
             </div>
             <div class="date">
-              {{ latestRelease.publishTime | formatDate }}
+              {{ $filters.formatDate(latestRelease.publishTime) }}
             </div>
             <div class="type">
-              {{ latestRelease.type | formatAlbumType(latestRelease) }} ·
-              {{ latestRelease.size }} {{ $t('common.songs') }}
+              {{ $filters.formatAlbumType(latestRelease.type, latestRelease) }}
+              · {{ latestRelease.size }} {{ $t('common.songs') }}
             </div>
           </div>
         </div>
@@ -132,7 +135,9 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
+import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { mapMutations, mapActions, mapState } from 'vuex';
 import {
   getArtist,
@@ -151,8 +156,33 @@ import TrackList from '@/components/TrackList.vue';
 import CoverRow from '@/components/CoverRow.vue';
 import Cover from '@/components/Cover.vue';
 import Modal from '@/components/Modal.vue';
+import type { Track, TrackId } from '@/types/music';
 
-export default {
+type ArtistDetail = {
+  id?: TrackId;
+  name?: string;
+  img1v1Url: string;
+  briefDesc?: string;
+  musicSize?: number;
+  albumSize?: number;
+  followed?: boolean;
+};
+
+type ArtistAlbum = {
+  id: TrackId;
+  name: string;
+  picUrl: string;
+  publishTime: string | number | Date;
+  type: string;
+  size: number;
+  [key: string]: any;
+};
+
+type ContextMenuInstance = {
+  openMenu: (e: MouseEvent) => void;
+};
+
+export default defineComponent({
   name: 'Artist',
   components: {
     Cover,
@@ -162,39 +192,44 @@ export default {
     Modal,
     ContextMenu,
   },
-  beforeRouteUpdate(to, from, next) {
+  inject: ['restoreMainScrollPosition', 'scrollMainTo'],
+  beforeRouteUpdate(
+    to: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
+    next: NavigationGuardNext
+  ) {
     this.artist.img1v1Url = '/img/default-user.jpg';
-    this.loadData(to.params.id, next);
+    this.loadData(to.params.id as TrackId, next);
   },
   data() {
     return {
       show: false,
       artist: {
         img1v1Url: '/img/default-user.jpg',
-      },
-      popularTracks: [],
-      albumsData: [],
+      } as ArtistDetail,
+      popularTracks: [] as Track[],
+      albumsData: [] as ArtistAlbum[],
       latestRelease: {
         picUrl: '',
         publishTime: 0,
         id: 0,
         name: '',
         type: '',
-        size: '',
-      },
+        size: 0,
+      } as ArtistAlbum,
       showMorePopTracks: false,
       showFullDescription: false,
-      similarArtists: [],
+      similarArtists: [] as ArtistDetail[],
     };
   },
   computed: {
     ...mapState(['player']),
-    albums() {
+    albums(): ArtistAlbum[] {
       return this.albumsData.filter(
         a => a.type === '专辑' || a.type === '精选集'
       );
     },
-    eps() {
+    eps(): ArtistAlbum[] {
       return this.albumsData.filter(a =>
         ['EP/Single', 'EP', 'Single'].includes(a.type)
       );
@@ -202,20 +237,20 @@ export default {
   },
   activated() {
     if (this.artist?.id?.toString() !== this.$route.params.id) {
-      this.loadData(this.$route.params.id);
+      this.loadData(this.$route.params.id as TrackId);
     } else {
-      this.$parent.$refs.scrollbar.restorePosition();
+      this.restoreMainScrollPosition();
     }
   },
   methods: {
     ...mapMutations(['appendTrackToPlayerList']),
     ...mapActions(['playFirstTrackOnList', 'playTrackOnListByID', 'showToast']),
-    loadData(id, next = undefined) {
+    loadData(id: TrackId, next?: NavigationGuardNext) {
       setTimeout(() => {
         if (!this.show) NProgress.start();
       }, 1000);
       this.show = false;
-      this.$parent.$refs.main.scrollTo({ top: 0 });
+      this.scrollMainTo({ top: 0 });
       getArtist(id).then(data => {
         this.artist = data.artist;
         this.setPopularTracks(data.hotSongs);
@@ -228,25 +263,25 @@ export default {
         this.latestRelease = data.hotAlbums[0];
       });
       if (isAccountLoggedIn()) {
-        similarArtists(id).then(data => {
+        similarArtists().then(data => {
           this.similarArtists = data.artists;
         });
       }
     },
-    setPopularTracks(hotSongs) {
+    setPopularTracks(hotSongs: Track[]) {
       const trackIDs = hotSongs.map(t => t.id);
       getTrackDetail(trackIDs.join(',')).then(data => {
-        this.popularTracks = data.songs;
+        this.popularTracks = data.songs as Track[];
       });
     },
-    goToAlbum(id) {
+    goToAlbum(id: TrackId) {
       this.$router.push({
         name: 'album',
         params: { id },
       });
     },
-    playPopularSongs(trackID = 'first') {
-      let trackIDs = this.popularTracks.map(t => t.id);
+    playPopularSongs(trackID: TrackId | 'first' = 'first') {
+      const trackIDs = this.popularTracks.map(t => t.id);
       this.$store.state.player.replacePlaylist(
         trackIDs,
         this.artist.id,
@@ -262,12 +297,12 @@ export default {
       followAArtist({
         id: this.artist.id,
         t: this.artist.followed ? 0 : 1,
-      }).then(data => {
+      }).then((data: any) => {
         if (data.code === 200) this.artist.followed = !this.artist.followed;
       });
     },
-    scrollTo(div, block = 'center') {
-      document.getElementById(div).scrollIntoView({
+    scrollTo(div: string, block: ScrollLogicalPosition = 'center') {
+      document.getElementById(div)?.scrollIntoView({
         behavior: 'smooth',
         block,
       });
@@ -280,25 +315,25 @@ export default {
         this.$store.commit('enableScrolling', true);
       }
     },
-    openMenu(e) {
-      this.$refs.artistMenu.openMenu(e);
+    openMenu(e: MouseEvent) {
+      (this.$refs.artistMenu as ContextMenuInstance | undefined)?.openMenu(e);
     },
-    copyUrl(id) {
-      let showToast = this.showToast;
+    copyUrl(id: TrackId | undefined) {
+      const showToast = this.showToast;
       this.$copyText(`${window.location.origin}/#/artist/${id}`)
-        .then(function () {
+        .then(() => {
           showToast(locale.t('toast.copied'));
         })
-        .catch(error => {
+        .catch((error: unknown) => {
           showToast(`${locale.t('toast.copyFailed')}${error}`);
         });
     },
-    openInBrowser(id) {
+    openInBrowser(id: TrackId | undefined) {
       const url = `${window.location.origin}/#/artist/${id}`;
       window.open(url);
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

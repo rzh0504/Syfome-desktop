@@ -74,13 +74,31 @@
   </div>
 </template>
 
-<script>
-import { mapMutations } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import nativeAlert from '@/utils/nativeAlert';
 import { loginWithAccount } from '@/api/auth';
 import { setActiveProvider as persistActiveProvider } from '@/providers';
 
-export default {
+type LoginResponse = {
+  code?: number;
+  profile?: unknown;
+  msg?: string;
+  message?: string;
+};
+
+type SourceState = {
+  serverUrl?: string;
+  username?: string;
+};
+
+type DataState = {
+  sources?: {
+    navidrome?: SourceState;
+  };
+};
+
+export default defineComponent({
   name: 'Login',
   data() {
     return {
@@ -95,17 +113,26 @@ export default {
     this.loadEditSource();
   },
   methods: {
-    ...mapMutations(['setActiveProvider', 'updateData', 'upsertSource']),
-    loadEditSource() {
+    setActiveProvider(provider: string) {
+      this.$store.commit('setActiveProvider', provider);
+    },
+    updateData(payload: { key: string; value: unknown }) {
+      this.$store.commit('updateData', payload);
+    },
+    upsertSource(source: Record<string, unknown>) {
+      this.$store.commit('upsertSource', source);
+    },
+    loadEditSource(): void {
       if (this.$route.query.edit !== '1') return;
 
-      const source = this.$store.state.data.sources?.navidrome;
+      const data = this.$store.state.data as DataState;
+      const source = data.sources?.navidrome;
       if (!source) return;
 
       this.server = source.serverUrl || this.server;
       this.username = source.username || '';
     },
-    login() {
+    login(): void {
       if (!this.server || !this.username || !this.password) {
         nativeAlert('请填写服务器地址、用户名和密码');
         return;
@@ -118,12 +145,12 @@ export default {
         password: this.password,
       })
         .then(this.handleLoginResponse)
-        .catch(error => {
+        .catch((error: Error) => {
           this.processing = false;
           nativeAlert(`登录失败：${error.message || error}`);
         });
     },
-    handleLoginResponse(data) {
+    handleLoginResponse(data: LoginResponse): void {
       if (!data) {
         this.processing = false;
         return;
@@ -157,7 +184,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

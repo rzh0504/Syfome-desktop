@@ -4,8 +4,10 @@
   </svg>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
   name: 'SvgIcon',
   props: {
     iconClass: {
@@ -29,11 +31,15 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style scoped>
 .svg-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  overflow: hidden;
   fill: currentColor;
 }
 </style>

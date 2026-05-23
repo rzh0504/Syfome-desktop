@@ -7,8 +7,8 @@
     >
       <div
         v-if="
-          (settings.lyricsBackground === 'blur') |
-            (settings.lyricsBackground === 'dynamic')
+          settings.lyricsBackground === 'blur' ||
+          settings.lyricsBackground === 'dynamic'
         "
         class="lyrics-background"
         :class="{
@@ -51,7 +51,7 @@
                   <router-link
                     v-if="hasList()"
                     :to="`${getListPath()}`"
-                    @click.native="toggleLyrics"
+                    @click="toggleLyrics"
                     >{{ currentTrack.name }}
                   </router-link>
                   <span v-else>
@@ -62,7 +62,7 @@
                   <router-link
                     v-if="artist.id !== 0"
                     :to="`/artist/${artist.id}`"
-                    @click.native="toggleLyrics"
+                    @click="toggleLyrics"
                     >{{ artist.name }}
                   </router-link>
                   <span v-else>
@@ -73,7 +73,7 @@
                     <router-link
                       :to="`/album/${album.id}`"
                       :title="album.name"
-                      @click.native="toggleLyrics"
+                      @click="toggleLyrics"
                       >{{ album.name }}
                     </router-link>
                   </span>
@@ -81,7 +81,7 @@
               </div>
               <div class="top-right">
                 <div class="volume-control">
-                  <button-icon :title="$t('player.mute')" @click.native="mute">
+                  <button-icon :title="$t('player.mute')" @click="mute">
                     <svg-icon v-show="volume > 0.5" icon-class="volume" />
                     <svg-icon v-show="volume === 0" icon-class="volume-mute" />
                     <svg-icon
@@ -105,7 +105,7 @@
                 <div class="buttons">
                   <button-icon
                     :title="$t('player.like')"
-                    @click.native="likeATrack(player.currentTrack.id)"
+                    @click="likeATrack(player.currentTrack.id)"
                   >
                     <svg-icon
                       :icon-class="
@@ -115,21 +115,21 @@
                   </button-icon>
                   <button-icon
                     :title="$t('contextMenu.addToPlaylist')"
-                    @click.native="addToPlaylist"
+                    @click="addToPlaylist"
                   >
                     <svg-icon icon-class="plus" />
                   </button-icon>
-                  <!-- <button-icon @click.native="openMenu" title="Menu"
+                  <!-- <button-icon @click="openMenu" title="Menu"
                     ><svg-icon icon-class="more"
                   /></button-icon> -->
                 </div>
               </div>
             </div>
             <div class="progress-bar">
-              <span>{{ formatTrackTime(player.progress) || '0:00' }}</span>
+              <span>{{ formatTrackTime(progress) || '0:00' }}</span>
               <div class="slider">
                 <vue-slider
-                  v-model="player.progress"
+                  v-model="progress"
                   :min="0"
                   :max="player.currentTrackDuration"
                   :interval="1"
@@ -153,7 +153,7 @@
                     : $t('player.repeat')
                 "
                 :class="{ active: player.repeatMode !== 'off' }"
-                @click.native="switchRepeatMode"
+                @click="switchRepeatMode"
               >
                 <svg-icon
                   v-show="player.repeatMode !== 'one'"
@@ -168,28 +168,25 @@
                 <button-icon
                   v-show="!player.isPersonalFM"
                   :title="$t('player.previous')"
-                  @click.native="playPrevTrack"
+                  @click="playPrevTrack"
                 >
                   <svg-icon icon-class="previous" />
                 </button-icon>
                 <button-icon
                   v-show="player.isPersonalFM"
                   title="不喜欢"
-                  @click.native="moveToFMTrash"
+                  @click="moveToFMTrash"
                 >
                   <svg-icon icon-class="thumbs-down" />
                 </button-icon>
                 <button-icon
                   id="play"
                   :title="$t(player.playing ? 'player.pause' : 'player.play')"
-                  @click.native="playOrPause"
+                  @click="playOrPause"
                 >
                   <svg-icon :icon-class="player.playing ? 'pause' : 'play'" />
                 </button-icon>
-                <button-icon
-                  :title="$t('player.next')"
-                  @click.native="playNextTrack"
-                >
+                <button-icon :title="$t('player.next')" @click="playNextTrack">
                   <svg-icon icon-class="next" />
                 </button-icon>
               </div>
@@ -197,7 +194,7 @@
                 v-show="!player.isPersonalFM"
                 :title="$t('player.shuffle')"
                 :class="{ active: player.shuffle }"
-                @click.native="switchShuffle"
+                @click="switchShuffle"
               >
                 <svg-icon icon-class="shuffle" />
               </button-icon>
@@ -208,7 +205,7 @@
                   lyricType === 'translation'
                 "
                 :title="$t('player.translationLyric')"
-                @click.native="switchLyricType"
+                @click="switchLyricType"
               >
                 <span class="lyric-switch-icon">译</span>
               </button-icon>
@@ -219,7 +216,7 @@
                   lyricType === 'romaPronunciation'
                 "
                 :title="$t('player.PronunciationLyric')"
-                @click.native="switchLyricType"
+                @click="switchLyricType"
               >
                 <span class="lyric-switch-icon">音</span>
               </button-icon>
@@ -298,10 +295,11 @@
   </transition>
 </template>
 
-<script>
+<script lang="ts">
 // The lyrics page of Apple Music is so gorgeous, so I copy the design.
 // Some of the codes are adapted from an open-source Vue music player implementation
 
+import { defineComponent } from 'vue';
 import { mapState, mapMutations, mapActions } from 'vuex';
 import VueSlider from 'vue-slider-component';
 import ContextMenu from '@/components/ContextMenu.vue';
@@ -315,8 +313,42 @@ import { isAccountLoggedIn } from '@/utils/auth';
 import { hasListSource, getListSourcePath } from '@/utils/playList';
 import locale from '@/locale';
 import { resizeImageUrl } from '@/utils/image';
+import type { PlayerState, PlayerTrack, TrackId } from '@/types/music';
 
-export default {
+type LyricLine = {
+  rawTime: string;
+  time: number;
+  content: string;
+};
+
+type DisplayLyricLine = LyricLine & {
+  contents: string[];
+};
+
+type RightClickLyric = DisplayLyricLine & {
+  idx: number;
+};
+
+type ContextMenuInstance = {
+  openMenu: (e: MouseEvent) => void;
+};
+
+type PaletteLike = {
+  DarkMuted?: {
+    _rgb: [number, number, number];
+  };
+};
+
+type VibrantModule = {
+  from: (
+    input: string,
+    options?: { colorCount?: number }
+  ) => { getPalette: () => Promise<PaletteLike> };
+};
+
+const vibrant = Vibrant as VibrantModule;
+
+export default defineComponent({
   name: 'Lyrics',
   components: {
     VueSlider,
@@ -325,48 +357,60 @@ export default {
   },
   data() {
     return {
-      lyricsInterval: null,
-      lyric: [],
-      tlyric: [],
-      romalyric: [],
+      timer: null as ReturnType<typeof setInterval> | null,
+      lyricsInterval: null as ReturnType<typeof setInterval> | null,
+      lyric: [] as LyricLine[],
+      tlyric: [] as LyricLine[],
+      romalyric: [] as LyricLine[],
       lyricType: 'translation', // or 'romaPronunciation'
       highlightLyricIndex: -1,
       minimize: true,
       background: '',
       date: this.formatTime(new Date()),
       isFullscreen: !!document.fullscreenElement,
-      rightClickLyric: null,
+      rightClickLyric: null as RightClickLyric | null,
+      progressValue: 0,
+      progressInterval: null as ReturnType<typeof setInterval> | null,
     };
   },
   computed: {
     ...mapState(['player', 'settings', 'showLyrics']),
-    currentTrack() {
-      return this.player.currentTrack;
+    currentTrack(): PlayerTrack {
+      return (this.player as PlayerState).currentTrack;
     },
     volume: {
-      get() {
-        return this.player.volume;
+      get(): number {
+        return (this.player as PlayerState).volume;
       },
-      set(value) {
-        this.player.volume = value;
+      set(value: number) {
+        (this.player as PlayerState).volume = value;
       },
     },
-    imageUrl() {
-      return resizeImageUrl(this.player.currentTrack?.al?.picUrl, 1024);
+    progress: {
+      get(): number {
+        return this.progressValue;
+      },
+      set(value: number) {
+        this.progressValue = value;
+        (this.player as PlayerState).progress = value;
+      },
     },
-    bgImageUrl() {
-      return resizeImageUrl(this.player.currentTrack?.al?.picUrl, 512);
+    imageUrl(): string {
+      return resizeImageUrl(this.currentTrack?.al?.picUrl, 1024);
     },
-    isShowLyricTypeSwitch() {
+    bgImageUrl(): string {
+      return resizeImageUrl(this.currentTrack?.al?.picUrl, 512);
+    },
+    isShowLyricTypeSwitch(): boolean {
       return this.romalyric.length > 0 && this.tlyric.length > 0;
     },
-    lyricToShow() {
+    lyricToShow(): DisplayLyricLine[] {
       return this.lyricType === 'translation'
         ? this.lyricWithTranslation
         : this.lyricWithRomaPronunciation;
     },
-    lyricWithTranslation() {
-      let ret = [];
+    lyricWithTranslation(): DisplayLyricLine[] {
+      let ret: DisplayLyricLine[] = [];
       // 空内容的去除
       const lyricFiltered = this.lyric.filter(({ content }) =>
         Boolean(content)
@@ -375,7 +419,12 @@ export default {
       if (lyricFiltered.length) {
         lyricFiltered.forEach(l => {
           const { rawTime, time, content } = l;
-          const lyricItem = { time, content, contents: [content] };
+          const lyricItem: DisplayLyricLine = {
+            ...l,
+            time,
+            content,
+            contents: [content],
+          };
           const sameTimeTLyric = this.tlyric.find(
             ({ rawTime: tLyricRawTime }) => tLyricRawTime === rawTime
           );
@@ -396,8 +445,8 @@ export default {
       }
       return ret;
     },
-    lyricWithRomaPronunciation() {
-      let ret = [];
+    lyricWithRomaPronunciation(): DisplayLyricLine[] {
+      let ret: DisplayLyricLine[] = [];
       // 空内容的去除
       const lyricFiltered = this.lyric.filter(({ content }) =>
         Boolean(content)
@@ -406,7 +455,12 @@ export default {
       if (lyricFiltered.length) {
         lyricFiltered.forEach(l => {
           const { rawTime, time, content } = l;
-          const lyricItem = { time, content, contents: [content] };
+          const lyricItem: DisplayLyricLine = {
+            ...l,
+            time,
+            content,
+            contents: [content],
+          };
           const sameTimeRomaLyric = this.romalyric.find(
             ({ rawTime: tLyricRawTime }) => tLyricRawTime === rawTime
           );
@@ -427,23 +481,23 @@ export default {
       }
       return ret;
     },
-    lyricFontSize() {
+    lyricFontSize(): Record<string, string> {
       return {
         fontSize: `${this.$store.state.settings.lyricFontSize || 28}px`,
       };
     },
-    noLyric() {
+    noLyric(): boolean {
       return this.lyric.length == 0;
     },
-    artist() {
+    artist(): { id?: TrackId; name?: string } {
       return this.currentTrack?.ar
         ? this.currentTrack.ar[0]
         : { id: 0, name: 'unknown' };
     },
-    album() {
+    album(): { id?: TrackId; name?: string } {
       return this.currentTrack?.al || { id: 0, name: 'unknown' };
     },
-    theme() {
+    theme(): string {
       return this.settings.lyricsBackground === true ? 'dark' : 'auto';
     },
   },
@@ -452,12 +506,12 @@ export default {
       this.getLyric();
       this.getCoverColor();
     },
-    showLyrics(show) {
+    showLyrics(show: boolean) {
       if (show) {
         this.setLyricsInterval();
         this.$store.commit('enableScrolling', false);
       } else {
-        clearInterval(this.lyricsInterval);
+        if (this.lyricsInterval) clearInterval(this.lyricsInterval);
         this.$store.commit('enableScrolling', true);
       }
     },
@@ -466,6 +520,8 @@ export default {
     this.getLyric();
     this.getCoverColor();
     this.initDate();
+    this.syncProgress();
+    this.progressInterval = setInterval(this.syncProgress, 500);
     document.addEventListener('keydown', e => {
       if (e.key === 'F11') {
         e.preventDefault();
@@ -476,28 +532,31 @@ export default {
       this.isFullscreen = !!document.fullscreenElement;
     });
   },
-  beforeDestroy: function () {
+  beforeUnmount: function () {
     if (this.timer) {
-      clearInterval(this.timer);
+      if (this.timer) clearInterval(this.timer);
     }
+    if (this.progressInterval) clearInterval(this.progressInterval);
   },
-  destroyed() {
-    clearInterval(this.lyricsInterval);
+  unmounted() {
+    if (this.lyricsInterval) clearInterval(this.lyricsInterval);
   },
   methods: {
     ...mapMutations(['toggleLyrics', 'updateModal']),
-    ...mapActions(['likeATrack']),
+    ...mapActions(['likeATrack', 'showToast']),
+    syncProgress() {
+      this.progressValue = (this.player as PlayerState).seek(null, false) ?? 0;
+    },
     initDate() {
-      var _this = this;
-      clearInterval(this.timer);
-      this.timer = setInterval(function () {
-        _this.date = _this.formatTime(new Date());
+      if (this.timer) clearInterval(this.timer);
+      this.timer = setInterval(() => {
+        this.date = this.formatTime(new Date());
       }, 1000);
     },
-    formatTime(value) {
-      let hour = value.getHours().toString();
-      let minute = value.getMinutes().toString();
-      let second = value.getSeconds().toString();
+    formatTime(value: Date) {
+      const hour = value.getHours().toString();
+      const minute = value.getMinutes().toString();
+      const second = value.getSeconds().toString();
       return (
         hour.padStart(2, '0') +
         ':' +
@@ -593,10 +652,10 @@ export default {
       this.lyricType =
         this.lyricType === 'translation' ? 'romaPronunciation' : 'translation';
     },
-    formatTrackTime(value) {
+    formatTrackTime(value?: number) {
       return formatTrackTime(value);
     },
-    clickLyricLine(value, startPlay = false) {
+    clickLyricLine(value: number, startPlay = false) {
       // TODO: 双击选择还会选中文字，考虑搞个右键菜单复制歌词
       let jumpFlag = false;
       this.lyric.filter(function (item) {
@@ -604,19 +663,19 @@ export default {
           jumpFlag = true;
         }
       });
-      if (window.getSelection().toString().length === 0 && !jumpFlag) {
-        this.player.seek(value);
+      if ((window.getSelection()?.toString().length || 0) === 0 && !jumpFlag) {
+        (this.player as PlayerState).seek(value);
       }
       if (startPlay === true) {
-        this.player.play();
+        (this.player as PlayerState).play();
       }
     },
-    openLyricMenu(e, lyric, idx) {
+    openLyricMenu(e: MouseEvent, lyric: DisplayLyricLine, idx: number) {
       this.rightClickLyric = { ...lyric, idx };
-      this.$refs.lyricMenu.openMenu(e);
+      (this.$refs.lyricMenu as ContextMenuInstance | undefined)?.openMenu(e);
       e.preventDefault();
     },
-    copyLyric(withTranslation) {
+    copyLyric(withTranslation: boolean) {
       if (this.rightClickLyric) {
         const idx = this.rightClickLyric.idx;
         if (!withTranslation) {
@@ -629,7 +688,7 @@ export default {
     setLyricsInterval() {
       this.lyricsInterval = setInterval(() => {
         const progress = this.player.seek(null, false) ?? 0;
-        let oldHighlightLyricIndex = this.highlightLyricIndex;
+        const oldHighlightLyricIndex = this.highlightLyricIndex;
         this.highlightLyricIndex = this.lyric.findIndex((l, index) => {
           const nextLyric = this.lyric[index + 1];
           return (
@@ -659,9 +718,11 @@ export default {
       if (this.settings.lyricsBackground !== true) return;
       const cover = resizeImageUrl(this.currentTrack.al?.picUrl, 256);
       if (!cover) return;
-      Vibrant.from(cover, { colorCount: 1 })
+      vibrant
+        .from(cover, { colorCount: 1 })
         .getPalette()
-        .then(palette => {
+        .then((palette: PaletteLike) => {
+          if (!palette.DarkMuted) return;
           const originColor = Color.rgb(palette.DarkMuted._rgb);
           const color = originColor.darken(0.1).rgb().string();
           const color2 = originColor.lighten(0.28).rotate(-30).rgb().string();
@@ -678,7 +739,7 @@ export default {
       this.player.mute();
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

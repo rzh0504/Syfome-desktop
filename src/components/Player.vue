@@ -9,7 +9,7 @@
       @click.stop
     >
       <vue-slider
-        v-model="player.progress"
+        v-model="progress"
         :min="0"
         :max="player.currentTrackDuration"
         :interval="1"
@@ -26,7 +26,12 @@
       <div class="playing">
         <div class="container" @click.stop>
           <img
-            :src="currentTrack.al && currentTrack.al.picUrl | resizeImage(224)"
+            :src="
+              $filters.resizeImage(
+                currentTrack.al && currentTrack.al.picUrl,
+                224
+              )
+            "
             loading="lazy"
             @click="goToAlbum"
           />
@@ -55,7 +60,7 @@
                   ? $t('player.unlike')
                   : $t('player.like')
               "
-              @click.native="likeATrack(player.currentTrack.id)"
+              @click="likeATrack(player.currentTrack.id)"
             >
               <svg-icon
                 v-show="!player.isCurrentTrackLiked"
@@ -76,23 +81,23 @@
           <button-icon
             v-show="!player.isPersonalFM"
             :title="$t('player.previous')"
-            @click.native="playPrevTrack"
+            @click="playPrevTrack"
             ><svg-icon icon-class="previous"
           /></button-icon>
           <button-icon
             v-show="player.isPersonalFM"
             title="不喜欢"
-            @click.native="moveToFMTrash"
+            @click="moveToFMTrash"
             ><svg-icon icon-class="thumbs-down"
           /></button-icon>
           <button-icon
             class="play"
             :title="$t(player.playing ? 'player.pause' : 'player.play')"
-            @click.native="playOrPause"
+            @click="playOrPause"
           >
             <svg-icon :icon-class="player.playing ? 'pause' : 'play'"
           /></button-icon>
-          <button-icon :title="$t('player.next')" @click.native="playNextTrack"
+          <button-icon :title="$t('player.next')" @click="playNextTrack"
             ><svg-icon icon-class="next"
           /></button-icon>
         </div>
@@ -107,7 +112,7 @@
               active: $route.name === 'next',
               disabled: player.isPersonalFM,
             }"
-            @click.native="goToNextTracksPage"
+            @click="goToNextTracksPage"
             ><svg-icon icon-class="list"
           /></button-icon>
           <button-icon
@@ -120,7 +125,7 @@
                 ? $t('player.repeatTrack')
                 : $t('player.repeat')
             "
-            @click.native="switchRepeatMode"
+            @click="switchRepeatMode"
           >
             <svg-icon
               v-show="player.repeatMode !== 'one'"
@@ -134,18 +139,18 @@
           <button-icon
             :class="{ active: player.shuffle, disabled: player.isPersonalFM }"
             :title="$t('player.shuffle')"
-            @click.native="switchShuffle"
+            @click="switchShuffle"
             ><svg-icon icon-class="shuffle"
           /></button-icon>
           <button-icon
             v-if="settings.enableReversedMode"
             :class="{ active: player.reversed, disabled: player.isPersonalFM }"
             :title="$t('player.reversed')"
-            @click.native="switchReversed"
+            @click="switchReversed"
             ><svg-icon icon-class="sort-up"
           /></button-icon>
           <div class="volume-control">
-            <button-icon :title="$t('player.mute')" @click.native="mute">
+            <button-icon :title="$t('player.mute')" @click="mute">
               <svg-icon v-show="volume > 0.5" icon-class="volume" />
               <svg-icon v-show="volume === 0" icon-class="volume-mute" />
               <svg-icon
@@ -171,7 +176,7 @@
             class="lyrics-button"
             title="歌词"
             style="margin-left: 12px"
-            @click.native="toggleLyrics"
+            @click="toggleLyrics"
             ><svg-icon icon-class="arrow-up"
           /></button-icon>
         </div>
@@ -180,7 +185,8 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { mapState, mapMutations, mapActions } from 'vuex';
 import '@/assets/css/slider.css';
 
@@ -188,8 +194,9 @@ import ButtonIcon from '@/components/ButtonIcon.vue';
 import VueSlider from 'vue-slider-component';
 import { goToListSource, hasListSource } from '@/utils/playList';
 import { formatTrackTime } from '@/utils/common';
+import type { PlayerState, PlayerTrack, TrackId } from '@/types/music';
 
-export default {
+export default defineComponent({
   name: 'Player',
   components: {
     ButtonIcon,
@@ -197,47 +204,64 @@ export default {
   },
   data() {
     return {
-      mouseDownTarget: null,
+      mouseDownTarget: null as EventTarget | null,
+      progressValue: 0,
+      progressInterval: null as ReturnType<typeof setInterval> | null,
     };
   },
   computed: {
     ...mapState(['player', 'settings', 'data']),
-    currentTrack() {
-      return this.player.currentTrack;
+    currentTrack(): PlayerTrack {
+      return (this.player as PlayerState).currentTrack;
     },
     volume: {
-      get() {
-        return this.player.volume;
+      get(): number {
+        return (this.player as PlayerState).volume;
       },
-      set(value) {
-        this.player.volume = value;
+      set(value: number) {
+        (this.player as PlayerState).volume = value;
       },
     },
-    playing() {
-      return this.player.playing;
+    progress: {
+      get(): number {
+        return this.progressValue;
+      },
+      set(value: number) {
+        this.progressValue = value;
+        (this.player as PlayerState).progress = value;
+      },
     },
-    audioSource() {
-      return this.player._howler?._src.includes('kuwo.cn')
+    playing(): boolean {
+      return (this.player as PlayerState).playing;
+    },
+    audioSource(): string {
+      return (this.player as PlayerState)._howler?._src?.includes('kuwo.cn')
         ? '音源来自酷我音乐'
         : '';
     },
   },
   mounted() {
+    this.syncProgress();
+    this.progressInterval = setInterval(this.syncProgress, 500);
     this.setupMediaControls();
     window.addEventListener('keydown', this.handleKeydown);
   },
-  beforeDestroy() {
+  beforeUnmount() {
+    if (this.progressInterval) clearInterval(this.progressInterval);
     window.removeEventListener('keydown', this.handleKeydown);
   },
   methods: {
     ...mapMutations(['toggleLyrics']),
     ...mapActions(['showToast', 'likeATrack']),
-    handleClick(event) {
+    syncProgress() {
+      this.progressValue = (this.player as PlayerState).seek(null, false) ?? 0;
+    },
+    handleClick(event: MouseEvent) {
       if (event.target == this.mouseDownTarget) {
         this.toggleLyrics();
       }
     },
-    handleMouseDown(event) {
+    handleMouseDown(event: MouseEvent) {
       this.mouseDownTarget = event.target;
     },
     playPrevTrack() {
@@ -259,7 +283,7 @@ export default {
         ? this.$router.go(-1)
         : this.$router.push({ name: 'next' });
     },
-    formatTrackTime(value) {
+    formatTrackTime(value: number) {
       return formatTrackTime(value);
     },
     hasList() {
@@ -269,10 +293,11 @@ export default {
       goToListSource();
     },
     goToAlbum() {
-      if (this.player.currentTrack.al.id === 0) return;
-      this.$router.push({ path: '/album/' + this.player.currentTrack.al.id });
+      const albumId = (this.player as PlayerState).currentTrack.al?.id;
+      if (albumId === 0) return;
+      this.$router.push({ path: '/album/' + albumId });
     },
-    goToArtist(id) {
+    goToArtist(id: TrackId) {
       this.$router.push({ path: '/artist/' + id });
     },
     moveToFMTrash() {
@@ -308,7 +333,7 @@ export default {
       }
     },
 
-    handleKeydown(event) {
+    handleKeydown(event: KeyboardEvent) {
       switch (event.code) {
         case 'MediaPlayPause':
           this.playOrPause();
@@ -324,7 +349,7 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

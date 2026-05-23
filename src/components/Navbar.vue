@@ -4,10 +4,10 @@
       <Win32Titlebar v-if="enableWin32Titlebar" />
       <LinuxTitlebar v-if="enableLinuxTitlebar" />
       <div class="navigation-buttons">
-        <button-icon @click.native="go('back')"
+        <button-icon @click="go('back')"
           ><svg-icon icon-class="arrow-left"
         /></button-icon>
-        <button-icon @click.native="go('forward')"
+        <button-icon @click="go('forward')"
           ><svg-icon icon-class="arrow-right"
         /></button-icon>
       </div>
@@ -69,20 +69,36 @@
   </div>
 </template>
 
-<script>
-import { mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent } from 'vue';
 import { isLooseLoggedIn as checkLooseLoggedIn, doLogout } from '@/utils/auth';
 
 // import icons for win32 title bar
 // icons by https://github.com/microsoft/vscode-codicons
-import 'vscode-codicons/dist/codicon.css';
+import '@vscode/codicons/dist/codicon.css';
 
 import Win32Titlebar from '@/components/Win32Titlebar.vue';
 import LinuxTitlebar from '@/components/LinuxTitlebar.vue';
 import ContextMenu from '@/components/ContextMenu.vue';
 import ButtonIcon from '@/components/ButtonIcon.vue';
 
-export default {
+type SettingsState = {
+  linuxEnableCustomTitlebar?: boolean;
+};
+
+type DataState = {
+  loginMode?: string;
+  user?: {
+    userId?: string | number;
+    avatarUrl?: string;
+  };
+};
+
+type ContextMenuInstance = {
+  openMenu: (event: MouseEvent) => void;
+};
+
+export default defineComponent({
   name: 'Navbar',
   components: {
     Win32Titlebar,
@@ -100,20 +116,25 @@ export default {
     };
   },
   computed: {
-    ...mapState(['settings', 'data']),
-    isLooseLoggedIn() {
+    settings(): SettingsState {
+      return this.$store.state.settings as SettingsState;
+    },
+    data(): DataState {
+      return this.$store.state.data as DataState;
+    },
+    isLooseLoggedIn(): boolean {
       const loginMode = this.data?.loginMode;
       const userId = this.data?.user?.userId;
       void loginMode;
       void userId;
       return checkLooseLoggedIn();
     },
-    avatarUrl() {
+    avatarUrl(): string {
       return this.data?.user?.avatarUrl && this.isLooseLoggedIn
         ? `${this.data?.user?.avatarUrl}?param=512y512`
         : '/img/logos/yesplaymusic.png';
     },
-    hasCustomTitlebar() {
+    hasCustomTitlebar(): boolean {
       return this.enableWin32Titlebar || this.enableLinuxTitlebar;
     },
   },
@@ -128,11 +149,11 @@ export default {
     }
   },
   methods: {
-    go(where) {
+    go(where: 'back' | 'forward') {
       if (where === 'back') this.$router.go(-1);
       else this.$router.go(1);
     },
-    doSearch() {
+    doSearch(): void {
       if (!this.keywords) return;
       if (
         this.$route.name === 'search' &&
@@ -145,25 +166,25 @@ export default {
         params: { keywords: this.keywords },
       });
     },
-    showUserProfileMenu(e) {
-      this.$refs.userProfileMenu.openMenu(e);
+    showUserProfileMenu(e: MouseEvent) {
+      (this.$refs.userProfileMenu as ContextMenuInstance).openMenu(e);
     },
-    logout() {
+    logout(): void {
       if (!confirm('确定要退出登录吗？')) return;
       doLogout();
       this.$router.push({ name: 'home' });
     },
-    toSettings() {
+    toSettings(): void {
       this.$router.push({ name: 'settings' });
     },
-    toGitHub() {
+    toGitHub(): void {
       window.open('https://github.com/qier222/YesPlayMusic');
     },
-    toLogin() {
+    toLogin(): void {
       this.$router.push({ name: 'login' });
     },
   },
-};
+});
 </script>
 
 <style lang="scss" scoped>

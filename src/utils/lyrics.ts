@@ -1,0 +1,119 @@
+type ParsedLyric = { time: number; rawTime: string; content: string };
+type LyricPayload = {
+  lrc?: { lyric?: string };
+  tlyric?: { lyric?: string };
+  romalrc?: { lyric?: string };
+  lyricUser?: unknown;
+  transUser?: unknown;
+};
+
+export function lyricParser(lrc: LyricPayload) {
+  return {
+    lyric: parseLyric(lrc?.lrc?.lyric || ''),
+    tlyric: parseLyric(lrc?.tlyric?.lyric || ''),
+    romalyric: parseLyric(lrc?.romalrc?.lyric || ''),
+    lyricuser: lrc.lyricUser,
+    transuser: lrc.transUser,
+  };
+}
+
+// regexr.com/6e52n
+const extractLrcRegex =
+  /^(?<lyricTimestamps>(?:\[.+?\])+)(?!\[)(?<content>.+)$/gm;
+const extractTimestampRegex =
+  /\[(?<min>\d+):(?<sec>\d+)(?:\.|:)*(?<ms>\d+)*\]/g;
+
+/**
+ * Parse the lyric string.
+ *
+ * @param {string} lrc The `lrc` input.
+ * @returns {ParsedLyric[]} The parsed lyric.
+ * @example parseLyric("[00:00.00] Hello, World!\n[00:00.10] Test\n");
+ */
+function parseLyric(lrc: string): ParsedLyric[] {
+  /**
+   * A sorted list of parsed lyric and its timestamp.
+   *
+   * @type {ParsedLyric[]}
+   * @see binarySearch
+   */
+  const parsedLyrics: ParsedLyric[] = [];
+
+  /**
+   * Find the appropriate index to push our parsed lyric.
+   * @param {ParsedLyric} lyric
+   */
+  const binarySearch = (lyric: ParsedLyric): number => {
+    let time = lyric.time;
+
+    let low = 0;
+    let high = parsedLyrics.length - 1;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const midTime = parsedLyrics[mid].time;
+      if (midTime === time) {
+        return mid;
+      } else if (midTime < time) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return low;
+  };
+
+  for (const line of lrc.trim().matchAll(extractLrcRegex)) {
+    const { lyricTimestamps = '', content = '' } = line.groups || {};
+
+    for (const timestamp of lyricTimestamps.matchAll(extractTimestampRegex)) {
+      const { min = '0', sec = '0', ms } = timestamp.groups || {};
+      const validMs = ms?.slice(0, 2) ?? '00';
+      const rawTime = `[${min}:${sec}.${validMs}]`;
+      const time = Number(min) * 60 + Number(sec) + Number(validMs) * 0.01;
+
+      /** @type {ParsedLyric} */
+      const parsedLyric = { rawTime, time, content: trimContent(content) };
+      parsedLyrics.splice(binarySearch(parsedLyric), 0, parsedLyric);
+    }
+  }
+
+  return parsedLyrics;
+}
+
+/**
+ * @param {string} content
+ * @returns {string}
+ */
+function trimContent(content: string): string {
+  let t = content.trim();
+  return t.length < 1 ? content : t;
+}
+
+/**
+ * @param {string} lyric
+ */
+export async function copyLyric(lyric: string): Promise<void> {
+  const textToCopy = lyric;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+    } catch (_err) {
+      alert('复制失败，请手动复制！');
+    }
+  } else {
+    const tempInput = document.createElement('textarea');
+    tempInput.value = textToCopy;
+    tempInput.style.position = 'absolute';
+    tempInput.style.left = '-9999px';
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try {
+      document.execCommand('copy');
+    } catch (_err) {
+      alert('复制失败，请手动复制！');
+    }
+    document.body.removeChild(tempInput);
+  }
+}
