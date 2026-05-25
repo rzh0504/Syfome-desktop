@@ -71,7 +71,7 @@
           <div
             class="tab dropdown"
             :class="{ active: currentTab === 'librarySongs' }"
-            @click="updateCurrentTab('librarySongs')"
+            @click="openLibrarySongsSortMenu"
           >
             <span class="text">{{
               {
@@ -80,9 +80,7 @@
                 playCount: '播放次数',
               }[librarySongsSort]
             }}</span>
-            <span class="icon" @click.stop="openLibrarySongsSortMenu"
-              ><svg-icon icon-class="dropdown"
-            /></span>
+            <span class="icon"><svg-icon icon-class="dropdown" /></span>
           </div>
           <div
             class="tab"
