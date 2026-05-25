@@ -27,10 +27,7 @@ export default {
     playlists: 'Çalma Listeleri',
     albums: 'Albümler',
     artists: 'Sanatçılar',
-    mvs: 'MVs',
-    cloudDisk: 'Cloud Disk',
     newPlayList: 'Yeni Çalma Listesi',
-    uploadSongs: 'Upload Songs',
     playHistory: {
       title: 'Play History',
       week: 'Latest Week',
@@ -54,7 +51,6 @@ export default {
     albums: 'Albümler',
     withAlbums: 'Albümler',
     artist: 'Sanatçı',
-    videos: 'Müzik Videoları',
     following: 'Takip Ediyor',
     follow: 'Takip Et',
   },
@@ -87,9 +83,6 @@ export default {
       Kimlik bilgileri yalnızca Navidrome / OpenSubsonic sunucunuza bağlanmak için yerelde kullanılır.`,
     noticeElectron: `Kimlik bilgileri yalnızca Navidrome / OpenSubsonic sunucunuza bağlanmak için yerelde kullanılır.`,
   },
-  mv: {
-    moreVideo: 'Daha Fazla Video',
-  },
   next: {
     nowPlaying: 'Şuan çalıyor',
     nextUp: 'Sıradaki',
@@ -116,7 +109,6 @@ export default {
     artist: 'Sanatçılar',
     album: 'Albümler',
     song: 'Müzikler',
-    mv: 'Müzik Videoları',
     playlist: 'Çalma Listeleri',
     noResult: 'Sonuç Bulunamadı',
     searchFor: 'Search for',
@@ -127,15 +119,6 @@ export default {
     language: 'Diller',
     lyric: 'Şarkı Sözleri',
     others: 'Diğerleri',
-    customization: 'Özelleştirme',
-    MusicGenrePreference: {
-      text: 'Müzik Dili Tercihi',
-      none: 'Tercih yok',
-      mandarin: 'Çince dili',
-      western: 'Avrupa ve Amerika',
-      korean: 'Korece',
-      japanese: 'Japonca',
-    },
     musicQuality: {
       text: 'Müzik Kalitesi',
       low: 'Düşük',
@@ -172,10 +155,8 @@ export default {
     clearSongsCache: 'Müzik çerezlerini temizle',
     cacheCount: 'Çerezlenen {song} Müzikler ({size})',
     showLyricsTranslation: 'Müzik sözlerinin çevirilerini göster',
-    showPlaylistsByAppleMusic: "Apple Music'in Çalma Listelerini Göster",
     showLibraryDefault: 'Kitaplık Varsayılanını göster',
-    subTitleDefault: 'Show Alias for Subtitle by default',
-    enableReversedMode: 'Enable Reversed Mode (Experimental)',
+    nyancatStyle: 'Enable Nyan Cat Progress Bar',
     enableCustomTitlebar: 'Enable custom title bar (Need restart)',
     lyricsBackground: {
       text: 'Şarkı Sözleri Arka Planını Göster',
@@ -188,34 +169,6 @@ export default {
       ask: 'Ask',
       exit: 'Exit',
       minimizeToTray: 'Küçült',
-    },
-    unm: {
-      enable: 'Enable',
-      audioSource: {
-        title: 'Audio Sources',
-      },
-      enableFlac: {
-        title: 'Enable FLAC Sources',
-        desc: 'To take effect, it may be required to clear the cache after enabling this function.',
-      },
-      searchMode: {
-        title: 'Audio Search Mode',
-        fast: 'Speed Priority',
-        order: 'Order Priority',
-      },
-      cookie: {
-        joox: 'Cookie for Joox use',
-        qq: 'Cookie for QQ use',
-        desc1: 'Click here for the configuration instruction. ',
-        desc2: 'Leave empty to pick up the default value',
-      },
-      ytdl: 'The youtube-dl Executable File for YtDl',
-      proxy: {
-        title: 'Proxy Server for UNM',
-        desc1:
-          'The proxy server to use for requesting services such as YouTube',
-        desc2: 'Leave empty to pick up the default value',
-      },
     },
   },
   contextMenu: {

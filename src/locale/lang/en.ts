@@ -27,10 +27,7 @@ export default {
     playlists: 'Playlists',
     albums: 'Albums',
     artists: 'Artists',
-    mvs: 'MVs',
-    cloudDisk: 'Cloud Disk',
     newPlayList: 'New Playlist',
-    uploadSongs: 'Upload Songs',
     playHistory: {
       title: 'Play History',
       week: 'Latest Week',
@@ -47,7 +44,6 @@ export default {
   },
   artist: {
     latestRelease: 'Latest Releases',
-    latestMV: 'Latest MV',
     popularSongs: 'Popular Songs',
     showMore: 'SHOW MORE',
     showLess: 'SHOW LESS',
@@ -55,10 +51,8 @@ export default {
     albums: 'Albums',
     withAlbums: 'Albums',
     artist: 'Artist',
-    videos: 'Music Videos',
     following: 'Following',
     follow: 'Follow',
-    similarArtists: 'Similar Artists',
     artistDesc: 'Artist Description',
   },
   album: {
@@ -91,9 +85,6 @@ export default {
       Credentials are only used to connect to your Navidrome / OpenSubsonic server and are kept locally.`,
     noticeElectron: `Credentials are only used to connect to your Navidrome / OpenSubsonic server and are kept locally.`,
   },
-  mv: {
-    moreVideo: 'More Videos',
-  },
   next: {
     nowPlaying: 'Now Playing',
     nextUp: 'Next Up',
@@ -106,7 +97,6 @@ export default {
     repeat: 'Repeat',
     repeatTrack: 'Repeat Track',
     shuffle: 'Shuffle',
-    reversed: 'Reversed',
     play: 'Play',
     pause: 'Pause',
     mute: 'Mute',
@@ -121,7 +111,6 @@ export default {
     artist: 'Artists',
     album: 'Albums',
     song: 'Songs',
-    mv: 'Music Videos',
     playlist: 'Playlists',
     noResult: 'No Results',
     searchFor: 'Search for',
@@ -132,15 +121,6 @@ export default {
     language: 'Languages',
     lyric: 'Lyric',
     others: 'Others',
-    customization: 'Customization',
-    MusicGenrePreference: {
-      text: 'Music Language Preference',
-      none: 'No preferences',
-      mandarin: 'Mandarin',
-      western: 'Europe & America',
-      korean: 'Korean',
-      japanese: 'Japanese',
-    },
     musicQuality: {
       text: 'Music Quality',
       low: 'Low',
@@ -177,11 +157,9 @@ export default {
     clearSongsCache: 'Clear Songs Cache',
     cacheCount: 'Cached {song} songs ({size})',
     showLyricsTranslation: 'Show lyrics translation',
-    showPlaylistsByAppleMusic: 'Show playlists by Apple Music',
     enableGlobalShortcut: 'Enable Global Shortcut',
     showLibraryDefault: 'Show Library after App Launched',
-    subTitleDefault: 'Show Alias for Subtitle by default',
-    enableReversedMode: 'Enable Reversed Mode (Experimental)',
+    nyancatStyle: 'Enable Nyan Cat Progress Bar',
     enableCustomTitlebar: 'Enable custom title bar (Need restart)',
     showLyricsTime: 'Display current time',
     lyricsBackground: {
@@ -195,34 +173,6 @@ export default {
       ask: 'Ask',
       exit: 'Exit',
       minimizeToTray: 'Minimize to tray',
-    },
-    unm: {
-      enable: 'Enable',
-      audioSource: {
-        title: 'Audio Sources',
-      },
-      enableFlac: {
-        title: 'Enable FLAC Sources',
-        desc: 'To take effect, it may be required to clear the cache after enabling this function.',
-      },
-      searchMode: {
-        title: 'Audio Search Mode',
-        fast: 'Speed Priority',
-        order: 'Order Priority',
-      },
-      cookie: {
-        joox: 'Cookie for Joox use',
-        qq: 'Cookie for QQ use',
-        desc1: 'Click here for the configuration instruction. ',
-        desc2: 'Leave empty to pick up the default value',
-      },
-      ytdl: 'The youtube-dl Executable File for YtDl',
-      proxy: {
-        title: 'Proxy Server for UNM',
-        desc1:
-          'The proxy server to use for requesting services such as YouTube',
-        desc2: 'Leave empty to pick up the default value',
-      },
     },
   },
   contextMenu: {

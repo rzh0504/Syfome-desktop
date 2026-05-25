@@ -55,7 +55,6 @@ export type PlayerState = {
   isPersonalFM?: boolean;
   repeatMode?: string;
   shuffle?: boolean;
-  reversed?: boolean;
   _howler?: { _src?: string };
   seek: (position?: number | null, shouldPlay?: boolean) => number | undefined;
   playPrevTrack: () => void;
@@ -66,7 +65,6 @@ export type PlayerState = {
   moveToFMTrash: () => void;
   switchRepeatMode: () => void;
   switchShuffle: () => void;
-  switchReversed: () => void;
   mute: () => void;
 };
 

@@ -82,9 +82,6 @@ export default {
   updateDailyTracks(state: AppState, dailyTracks: any[]) {
     state.dailyTracks = dailyTracks;
   },
-  updateLastfm(state: AppState, session: any) {
-    state.lastfm = session;
-  },
   updateShortcut(
     state: AppState,
     { id, type, shortcut }: { id: string; type: string; shortcut: string }

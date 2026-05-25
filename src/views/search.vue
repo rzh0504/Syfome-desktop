@@ -127,7 +127,6 @@ export default defineComponent({
       artists: [] as SearchItem[],
       albums: [] as SearchItem[],
       playlists: [] as SearchItem[],
-      musicVideos: [] as SearchItem[],
     };
   },
   computed: {
@@ -282,7 +281,6 @@ export default defineComponent({
 }
 
 .tracks,
-.music-videos,
 .playlists {
   margin-top: 46px;
 }

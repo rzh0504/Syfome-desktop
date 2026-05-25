@@ -27,8 +27,6 @@ export function getListSourcePath(): string {
     return '/library/liked-songs';
   } else if (state.player.playlistSource.type === 'url') {
     return state.player.playlistSource.id;
-  } else if (state.player.playlistSource.type === 'cloudDisk') {
-    return '/library';
   } else {
     return `/${state.player.playlistSource.type}/${state.player.playlistSource.id}`;
   }

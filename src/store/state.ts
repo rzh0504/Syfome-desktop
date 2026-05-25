@@ -26,8 +26,6 @@ export default {
     playlists: [],
     albums: [],
     artists: [],
-    mvs: [],
-    cloudDisk: [],
     playHistory: {
       weekData: [],
       allData: [],

@@ -129,9 +129,7 @@ export default defineComponent({
       return this.$parent as TrackListParent;
     },
     track(): any {
-      return this.type === 'cloudDisk'
-        ? this.trackProp.simpleSong
-        : this.trackProp;
+      return this.trackProp;
     },
     playable(): boolean | undefined {
       return this.track?.privilege?.pl > 0 || this.track?.playable;
@@ -185,12 +183,7 @@ export default defineComponent({
         tn = this.track.tns[0];
       }
 
-      //优先显示alia
-      if (this.$store.state.settings.subTitleDefault) {
-        return this.track?.alia?.length > 0 ? this.track.alia[0] : tn;
-      } else {
-        return tn === undefined ? this.track.alia[0] : tn;
-      }
+      return tn === undefined ? this.track.alia[0] : tn;
     },
     type() {
       return this.parentList.type;
@@ -243,7 +236,7 @@ export default defineComponent({
       return true;
     },
     showLikeButton() {
-      return this.type !== 'tracklist' && this.type !== 'cloudDisk';
+      return this.type !== 'tracklist';
     },
     showOrderNumber() {
       return this.type === 'album';

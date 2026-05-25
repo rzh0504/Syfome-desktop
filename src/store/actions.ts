@@ -216,20 +216,6 @@ export default {
       return result;
     });
   },
-  fetchLikedMVs: ({ commit }: ActionContextLike) => {
-    commit('updateLikedXXX', {
-      name: 'mvs',
-      data: [],
-    });
-    return Promise.resolve();
-  },
-  fetchCloudDisk: ({ commit }: ActionContextLike) => {
-    commit('updateLikedXXX', {
-      name: 'cloudDisk',
-      data: [],
-    });
-    return Promise.resolve();
-  },
   fetchPlayHistory: ({ state, commit }: ActionContextLike) => {
     const history = state.data.localPlayHistory || [];
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;

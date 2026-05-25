@@ -75,33 +75,6 @@
           </select>
         </div>
       </div>
-      <div class="item">
-        <div class="left">
-          <div class="title">
-            {{ $t('settings.MusicGenrePreference.text') }}
-          </div>
-        </div>
-        <div class="right">
-          <select v-model="musicLanguage">
-            <option value="all">{{
-              $t('settings.MusicGenrePreference.none')
-            }}</option>
-            <option value="zh">{{
-              $t('settings.MusicGenrePreference.mandarin')
-            }}</option>
-            <option value="ea">{{
-              $t('settings.MusicGenrePreference.western')
-            }}</option>
-            <option value="jp">{{
-              $t('settings.MusicGenrePreference.japanese')
-            }}</option>
-            <option value="kr">{{
-              $t('settings.MusicGenrePreference.korean')
-            }}</option>
-          </select>
-        </div>
-      </div>
-
       <!-- <h3>音质</h3> -->
       <div class="item">
         <div class="left">
@@ -270,24 +243,6 @@
           </select>
         </div>
       </div>
-      <h3>{{ $t('settings.customization') }}</h3>
-      <div v-if="false" class="item">
-        <div class="left">
-          <div class="title">
-            {{
-              isLastfmConnected
-                ? `已连接到 Last.fm (${lastfm.name})`
-                : '连接 Last.fm '
-            }}</div
-          >
-        </div>
-        <div class="right">
-          <button v-if="isLastfmConnected" @click="lastfmDisconnect()"
-            >断开连接
-          </button>
-          <button v-else @click="lastfmConnect()"> 授权连接 </button>
-        </div>
-      </div>
       <h3>{{ $t('settings.others') }}</h3>
       <div v-if="isElectron && !isMac" class="item">
         <div class="left">
@@ -344,60 +299,7 @@
 
       <div class="item">
         <div class="left">
-          <div class="title">
-            {{ $t('settings.showPlaylistsByAppleMusic') }}</div
-          >
-        </div>
-        <div class="right">
-          <div class="toggle">
-            <input
-              id="show-playlists-by-apple-music"
-              v-model="showPlaylistsByAppleMusic"
-              type="checkbox"
-              name="show-playlists-by-apple-music"
-            />
-            <label for="show-playlists-by-apple-music"></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="item">
-        <div class="left">
-          <div class="title">{{ $t('settings.subTitleDefault') }}</div>
-        </div>
-        <div class="right">
-          <div class="toggle">
-            <input
-              id="sub-title-default"
-              v-model="subTitleDefault"
-              type="checkbox"
-              name="sub-title-default"
-            />
-            <label for="sub-title-default"></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="item">
-        <div class="left">
-          <div class="title">{{ $t('settings.enableReversedMode') }}</div>
-        </div>
-        <div class="right">
-          <div class="toggle">
-            <input
-              id="enable-reversed-mode"
-              v-model="enableReversedMode"
-              type="checkbox"
-              name="enable-reversed-mode"
-            />
-            <label for="enable-reversed-mode"></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="item">
-        <div class="left">
-          <div class="title" style="transform: scaleX(-1)">🐈️ 🏳️‍🌈</div>
+          <div class="title">{{ $t('settings.nyancatStyle') }}</div>
         </div>
         <div class="right">
           <div class="toggle">
@@ -445,34 +347,6 @@
           <button @click="sendProxyConfig">更新代理</button>
         </div>
       </div>
-      <div v-if="isElectron">
-        <h3>Real IP</h3>
-        <div class="item">
-          <div class="left">
-            <div class="title"> Real IP </div>
-          </div>
-          <div class="right">
-            <div class="toggle">
-              <input
-                id="enable-real-ip"
-                v-model="enableRealIP"
-                type="checkbox"
-                name="enable-real-ip"
-              />
-              <label for="enable-real-ip"></label>
-            </div>
-          </div>
-        </div>
-        <div id="real-ip" :class="{ disabled: !enableRealIP }">
-          <input
-            v-model="realIP"
-            class="text-input"
-            placeholder="IP地址"
-            :disabled="!enableRealIP"
-          />
-        </div>
-      </div>
-
       <div v-if="isElectron">
         <h3>快捷键</h3>
         <div class="item">
@@ -582,7 +456,6 @@
 import { defineComponent } from 'vue';
 import { mapState, mapActions, mapMutations } from 'vuex';
 import { isLooseLoggedIn, doLogout } from '@/utils/auth';
-import { auth as lastfmAuth } from '@/api/lastfm';
 import { bytesToSize } from '@/utils/common';
 import { changeAppearance } from '@/utils/appearance';
 import { countDBSize, clearDB } from '@/utils/db';
@@ -640,7 +513,7 @@ export default defineComponent({
     };
   },
   computed: {
-    ...mapState(['player', 'settings', 'data', 'lastfm']),
+    ...mapState(['player', 'settings', 'data']),
     isElectron(): boolean {
       return Boolean(process.env.IS_ELECTRON);
     },
@@ -719,17 +592,6 @@ export default defineComponent({
         this.$store.commit('changeLang', lang);
       },
     },
-    musicLanguage: {
-      get() {
-        return this.settings.musicLanguage ?? 'all';
-      },
-      set(value: string) {
-        this.$store.commit('updateSettings', {
-          key: 'musicLanguage',
-          value,
-        });
-      },
-    },
     appearance: {
       get() {
         if (this.settings.appearance === undefined) return 'auto';
@@ -796,30 +658,6 @@ export default defineComponent({
         this.player.setOutputDevice();
       },
     },
-    showPlaylistsByAppleMusic: {
-      get() {
-        if (this.settings.showPlaylistsByAppleMusic === undefined) return true;
-        return this.settings.showPlaylistsByAppleMusic;
-      },
-      set(value: boolean) {
-        this.$store.commit('updateSettings', {
-          key: 'showPlaylistsByAppleMusic',
-          value,
-        });
-      },
-    },
-    nyancatStyle: {
-      get() {
-        if (this.settings.nyancatStyle === undefined) return false;
-        return this.settings.nyancatStyle;
-      },
-      set(value: boolean) {
-        this.$store.commit('updateSettings', {
-          key: 'nyancatStyle',
-          value,
-        });
-      },
-    },
     automaticallyCacheSongs: {
       get() {
         if (this.settings.automaticallyCacheSongs === undefined) return false;
@@ -879,30 +717,16 @@ export default defineComponent({
         });
       },
     },
-    subTitleDefault: {
+    nyancatStyle: {
       get() {
-        return this.settings.subTitleDefault;
+        if (this.settings.nyancatStyle === undefined) return false;
+        return this.settings.nyancatStyle;
       },
-      set(value) {
+      set(value: boolean) {
         this.$store.commit('updateSettings', {
-          key: 'subTitleDefault',
+          key: 'nyancatStyle',
           value,
         });
-      },
-    },
-    enableReversedMode: {
-      get() {
-        if (this.settings.enableReversedMode === undefined) return false;
-        return this.settings.enableReversedMode;
-      },
-      set(value) {
-        this.$store.commit('updateSettings', {
-          key: 'enableReversedMode',
-          value,
-        });
-        if (value === false) {
-          this.$store.state.player.reversed = false;
-        }
       },
     },
     enableGlobalShortcut: {
@@ -968,28 +792,6 @@ export default defineComponent({
         });
       },
     },
-    enableRealIP: {
-      get() {
-        return this.settings.enableRealIP || false;
-      },
-      set(value: boolean) {
-        this.$store.commit('updateSettings', {
-          key: 'enableRealIP',
-          value: value,
-        });
-      },
-    },
-    realIP: {
-      get() {
-        return this.settings.realIP || '';
-      },
-      set(value: string) {
-        this.$store.commit('updateSettings', {
-          key: 'realIP',
-          value: value,
-        });
-      },
-    },
     proxyPort: {
       get() {
         return this.settings.proxyConfig?.port || '';
@@ -1013,9 +815,6 @@ export default defineComponent({
           value,
         });
       },
-    },
-    isLastfmConnected(): boolean {
-      return this.lastfm && this.lastfm.key !== undefined;
     },
   },
   created() {
@@ -1105,20 +904,6 @@ export default defineComponent({
       clearDB().then(() => {
         this.countDBSize();
       });
-    },
-    lastfmConnect() {
-      lastfmAuth();
-      let lastfmChecker = setInterval(() => {
-        const session = localStorage.getItem('lastfm');
-        if (session) {
-          this.$store.commit('updateLastfm', JSON.parse(session));
-          clearInterval(lastfmChecker);
-        }
-      }, 1000);
-    },
-    lastfmDisconnect() {
-      localStorage.removeItem('lastfm');
-      this.$store.commit('updateLastfm', {});
     },
     sendProxyConfig() {
       if (this.proxyProtocol === 'noProxy') return;

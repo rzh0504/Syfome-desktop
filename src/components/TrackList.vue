@@ -1,7 +1,7 @@
 <template>
   <div class="track-list">
     <ContextMenu ref="menu">
-      <div v-show="type !== 'cloudDisk'" class="item-info">
+      <div class="item-info">
         <img
           :src="$filters.resizeImage(rightClickedTrackComputed.al.picUrl, 224)"
           loading="lazy"
@@ -11,7 +11,7 @@
           <div class="subtitle">{{ rightClickedTrackComputed.ar[0].name }}</div>
         </div>
       </div>
-      <hr v-show="type !== 'cloudDisk'" />
+      <hr />
       <div class="item" @click="play">{{ $t('contextMenu.play') }}</div>
       <div class="item" @click="addToQueue">{{
         $t('contextMenu.addToQueue')
@@ -22,19 +22,11 @@
         @click="removeTrackFromQueue"
         >从队列删除</div
       >
-      <hr v-show="type !== 'cloudDisk'" />
-      <div
-        v-show="!isRightClickedTrackLiked && type !== 'cloudDisk'"
-        class="item"
-        @click="like"
-      >
+      <hr />
+      <div v-show="!isRightClickedTrackLiked" class="item" @click="like">
         {{ $t('contextMenu.saveToMyLikedSongs') }}
       </div>
-      <div
-        v-show="isRightClickedTrackLiked && type !== 'cloudDisk'"
-        class="item"
-        @click="like"
-      >
+      <div v-show="isRightClickedTrackLiked" class="item" @click="like">
         {{ $t('contextMenu.removeFromMyLikedSongs') }}
       </div>
       <div
@@ -43,21 +35,10 @@
         @click="removeTrackFromPlaylist"
         >从歌单中删除</div
       >
-      <div
-        v-show="type !== 'cloudDisk'"
-        class="item"
-        @click="addTrackToPlaylist"
-        >{{ $t('contextMenu.addToPlaylist') }}</div
-      >
-      <div v-show="type !== 'cloudDisk'" class="item" @click="copyLink">{{
-        $t('contextMenu.copyUrl')
+      <div class="item" @click="addTrackToPlaylist">{{
+        $t('contextMenu.addToPlaylist')
       }}</div>
-      <div
-        v-if="extraContextMenuItem.includes('removeTrackFromCloudDisk')"
-        class="item"
-        @click="removeTrackFromCloudDisk"
-        >从云盘中删除</div
-      >
+      <div class="item" @click="copyLink">{{ $t('contextMenu.copyUrl') }}</div>
     </ContextMenu>
 
     <div :style="listStyles">
@@ -79,7 +60,6 @@ import { defineComponent } from 'vue';
 import type { PropType } from 'vue';
 import { mapActions, mapMutations, mapState } from 'vuex';
 import { addOrRemoveTrackFromPlaylist } from '@/api/playlist';
-import { cloudDiskTrackDelete } from '@/api/user';
 import { isAccountLoggedIn } from '@/utils/auth';
 
 import TrackListItem from '@/components/TrackListItem.vue';
@@ -118,7 +98,7 @@ export default defineComponent({
     type: {
       type: String,
       default: 'tracklist',
-    }, // tracklist | album | playlist | cloudDisk
+    }, // tracklist | album | playlist
     id: {
       type: [Number, String] as PropType<TrackId>,
       default: 0,
@@ -143,7 +123,6 @@ export default defineComponent({
         return [
           // 'removeTrackFromPlaylist'
           // 'removeTrackFromQueue'
-          // 'removeTrackFromCloudDisk'
         ];
       },
     },
@@ -177,7 +156,7 @@ export default defineComponent({
       );
     },
     rightClickedTrackComputed() {
-      return this.type === 'cloudDisk' ? emptyTrack : this.rightClickedTrack;
+      return this.rightClickedTrack;
     },
   },
   created() {
@@ -216,9 +195,6 @@ export default defineComponent({
       } else if (this.dbclickTrackFunc === 'dailyTracks') {
         const trackIDs = this.tracks.map(t => t.id);
         this.player.replacePlaylist(trackIDs, '/daily/songs', 'url', trackID);
-      } else if (this.dbclickTrackFunc === 'playCloudDisk') {
-        const trackIDs = this.tracks.map(t => t.id || t.songId);
-        this.player.replacePlaylist(trackIDs, this.id, 'cloudDisk', trackID);
       }
     },
     playThisListDefault(trackID: TrackId | undefined) {
@@ -293,23 +269,6 @@ export default defineComponent({
       this.$store.state.player.removeTrackFromQueue(
         this.rightClickedTrackIndex
       );
-    },
-    removeTrackFromCloudDisk() {
-      if (confirm(`确定要从云盘删除 ${this.rightClickedTrack.songName}？`)) {
-        const trackID = this.rightClickedTrack.songId;
-        cloudDiskTrackDelete(trackID).then(data => {
-          this.showToast(
-            data.code === 200 ? '已将此歌曲从云盘删除' : data.message
-          );
-          const newCloudDisk = this.liked.cloudDisk.filter(
-            t => t.songId !== trackID
-          );
-          this.$store.commit('updateLikedXXX', {
-            name: 'cloudDisk',
-            data: newCloudDisk,
-          });
-        });
-      }
     },
   },
 });

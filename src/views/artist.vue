@@ -102,16 +102,6 @@
       />
     </div>
 
-    <div v-if="similarArtists.length !== 0" class="similar-artists">
-      <div class="section-title">{{ $t('artist.similarArtists') }}</div>
-      <CoverRow
-        type="artist"
-        :column-number="6"
-        gap="36px 28px"
-        :items="similarArtists.slice(0, 12)"
-      />
-    </div>
-
     <Modal
       :show="showFullDescription"
       :close="toggleFullDescription"
@@ -139,12 +129,7 @@
 import { defineComponent } from 'vue';
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import { mapMutations, mapActions, mapState } from 'vuex';
-import {
-  getArtist,
-  getArtistAlbum,
-  followAArtist,
-  similarArtists,
-} from '@/api/artist';
+import { getArtist, getArtistAlbum, followAArtist } from '@/api/artist';
 import { getTrackDetail } from '@/api/track';
 import locale from '@/locale';
 import { isAccountLoggedIn } from '@/utils/auth';
@@ -219,7 +204,6 @@ export default defineComponent({
       } as ArtistAlbum,
       showMorePopTracks: false,
       showFullDescription: false,
-      similarArtists: [] as ArtistDetail[],
     };
   },
   computed: {
@@ -262,11 +246,6 @@ export default defineComponent({
         this.albumsData = data.hotAlbums;
         this.latestRelease = data.hotAlbums[0];
       });
-      if (isAccountLoggedIn()) {
-        similarArtists().then(data => {
-          this.similarArtists = data.artists;
-        });
-      }
     },
     setPopularTracks(hotSongs: Track[]) {
       const trackIDs = hotSongs.map(t => t.id);

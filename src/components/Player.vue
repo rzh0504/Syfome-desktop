@@ -142,13 +142,6 @@
             @click="switchShuffle"
             ><svg-icon icon-class="shuffle"
           /></button-icon>
-          <button-icon
-            v-if="settings.enableReversedMode"
-            :class="{ active: player.reversed, disabled: player.isPersonalFM }"
-            :title="$t('player.reversed')"
-            @click="switchReversed"
-            ><svg-icon icon-class="sort-up"
-          /></button-icon>
           <div class="volume-control">
             <button-icon :title="$t('player.mute')" @click="mute">
               <svg-icon v-show="volume > 0.5" icon-class="volume" />
@@ -308,9 +301,6 @@ export default defineComponent({
     },
     switchShuffle() {
       this.player.switchShuffle();
-    },
-    switchReversed() {
-      this.player.switchReversed();
     },
     mute() {
       this.player.mute();

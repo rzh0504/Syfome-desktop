@@ -24,10 +24,7 @@ export default {
     playlists: '歌單',
     albums: '專輯',
     artists: '藝人',
-    mvs: 'MV',
-    cloudDisk: '雲端硬碟',
     newPlayList: '新增歌單',
-    uploadSongs: '上傳音樂',
     playHistory: {
       title: '聽歌排行',
       week: '最近一周',
@@ -51,7 +48,6 @@ export default {
     albums: '專輯',
     withAlbums: '張專輯',
     artist: '藝人',
-    videos: '個 MV',
     following: '正在追蹤',
     follow: '追蹤',
   },
@@ -84,9 +80,6 @@ export default {
       帳戶資訊僅用於連線至您的 Navidrome / OpenSubsonic 伺服器，並保存在本地。`,
     noticeElectron: `帳戶資訊僅用於連線至您的 Navidrome / OpenSubsonic 伺服器，並保存在本地。`,
   },
-  mv: {
-    moreVideo: '更多影片',
-  },
   next: {
     nowPlaying: '正在播放',
     nextUp: '即將播放',
@@ -99,7 +92,6 @@ export default {
     repeat: '循環播放',
     repeatTrack: '單曲循環',
     shuffle: '隨機播放',
-    reversed: '倒序播放',
     play: '播放',
     pause: '暫停',
     mute: '靜音',
@@ -114,7 +106,6 @@ export default {
     artist: '藝人',
     album: '專輯',
     song: '歌曲',
-    mv: '影片',
     playlist: '歌單',
     noResult: '暫無結果',
     searchFor: '搜尋',
@@ -125,15 +116,6 @@ export default {
     language: '語言',
     lyric: '歌詞',
     others: '其他',
-    customization: '自訂',
-    MusicGenrePreference: {
-      text: '音樂語種偏好',
-      none: '無偏好',
-      mandarin: '華語',
-      western: '歐美',
-      korean: '韓語',
-      japanese: '日語',
-    },
     musicQuality: {
       text: '音質選擇',
       low: '普通',
@@ -171,11 +153,9 @@ export default {
     cacheCount: '已快取 {song} 首 ({size})',
     showLyricsTranslation: '顯示歌詞翻譯',
     minimizeToTray: '最小化到工作列角落',
-    showPlaylistsByAppleMusic: '首頁顯示來自 Apple Music 的歌單',
     enableGlobalShortcut: '啟用全域快捷鍵',
     showLibraryDefault: '啟動後顯示音樂庫',
-    subTitleDefault: '副標題使用別名',
-    enableReversedMode: '啟用倒序播放功能 (實驗性功能)',
+    nyancatStyle: '啟用彩虹貓進度條',
     enableCustomTitlebar: '啟用自訂標題列（重新啟動後生效）',
     showLyricsTime: '顯示目前時間',
     lyricsBackground: {
@@ -189,33 +169,6 @@ export default {
       ask: '詢問',
       exit: '退出',
       minimizeToTray: '最小化到工作列角落',
-    },
-    unm: {
-      enable: '啟用',
-      audioSource: {
-        title: '備選音源',
-      },
-      enableFlac: {
-        title: '啟用 FLAC',
-        desc: '啟用後需要清除歌曲快取才能生效',
-      },
-      searchMode: {
-        title: '音源搜尋模式',
-        fast: '速度優先',
-        order: '順序優先',
-      },
-      cookie: {
-        joox: 'Joox 引擎的 Cookie',
-        qq: 'QQ 引擎的 Cookie',
-        desc1: '設定說明請參見此處',
-        desc2: '，留空則不進行相關設定',
-      },
-      ytdl: 'YtDl 引擎要使用的 youtube-dl 執行檔',
-      proxy: {
-        title: '用於 UNM 的 Proxy 伺服器',
-        desc1: '請求如 YouTube 音源服務時要使用的 Proxy 伺服器',
-        desc2: '留空則不進行相關設定',
-      },
     },
   },
   contextMenu: {

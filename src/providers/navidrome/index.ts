@@ -279,27 +279,16 @@ export async function searchAll({
   const artists = (result.artist || []).map(mapArtist);
   const albums = (result.album || []).map(mapAlbum);
 
-  if (type === 1004) {
-    return {
-      result: {
-        mvs: [],
-        hasMore: false,
-      },
-    };
-  }
-
   return {
     result: {
       songs,
       artists,
       albums,
       playlists: [],
-      mvs: [],
       hasMore: songs.length + artists.length + albums.length >= limit,
       songCount: songs.length,
       artistCount: artists.length,
       albumCount: albums.length,
-      mvCount: 0,
     },
   };
 }

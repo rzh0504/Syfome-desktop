@@ -24,10 +24,7 @@ export default {
     playlists: '歌单',
     albums: '专辑',
     artists: '艺人',
-    mvs: 'MV',
-    cloudDisk: '云盘',
     newPlayList: '新建歌单',
-    uploadSongs: '上传歌曲',
     playHistory: {
       title: '听歌排行',
       week: '最近一周',
@@ -44,7 +41,6 @@ export default {
   },
   artist: {
     latestRelease: '最新发布',
-    latestMV: '最新 MV',
     popularSongs: '热门歌曲',
     showMore: '显示更多',
     showLess: '收起',
@@ -52,10 +48,8 @@ export default {
     albums: '专辑',
     withAlbums: '张专辑',
     artist: '艺人',
-    videos: '个 MV',
     following: '正在关注',
     follow: '关注',
-    similarArtists: '相似艺人',
     artistDesc: '艺术家介绍',
   },
   album: {
@@ -88,9 +82,6 @@ export default {
       账号信息仅用于连接你的 Navidrome / OpenSubsonic 服务器，并保存在本地。`,
     noticeElectron: `账号信息仅用于连接你的 Navidrome / OpenSubsonic 服务器，并保存在本地。`,
   },
-  mv: {
-    moreVideo: '更多视频',
-  },
   next: {
     nowPlaying: '正在播放',
     nextUp: '即将播放',
@@ -103,7 +94,6 @@ export default {
     repeat: '循环播放',
     repeatTrack: '单曲循环',
     shuffle: '随机播放',
-    reversed: '倒序播放',
     play: '播放',
     pause: '暂停',
     mute: '静音',
@@ -118,7 +108,6 @@ export default {
     artist: '艺人',
     album: '专辑',
     song: '歌曲',
-    mv: '视频',
     playlist: '歌单',
     noResult: '暂无结果',
     searchFor: '搜索',
@@ -129,15 +118,6 @@ export default {
     language: '语言',
     lyric: '歌词',
     others: '其他',
-    customization: '自定义',
-    MusicGenrePreference: {
-      text: '音乐语种偏好',
-      none: '无偏好',
-      mandarin: '华语',
-      western: '欧美',
-      korean: '韩语',
-      japanese: '日语',
-    },
     musicQuality: {
       text: '音质选择',
       low: '普通',
@@ -174,11 +154,9 @@ export default {
     clearSongsCache: '清除歌曲缓存',
     cacheCount: '已缓存 {song} 首 ({size})',
     showLyricsTranslation: '显示歌词翻译',
-    showPlaylistsByAppleMusic: '首页显示来自 Apple Music 的歌单',
     enableGlobalShortcut: '启用全局快捷键',
     showLibraryDefault: '启动后显示音乐库',
-    subTitleDefault: '副标题使用别名',
-    enableReversedMode: '启用倒序播放功能 (实验性功能)',
+    nyancatStyle: '启用彩虹猫进度条',
     enableCustomTitlebar: '启用自定义标题栏 (重启后生效)',
     lyricsBackground: {
       text: '显示歌词背景',
@@ -192,33 +170,6 @@ export default {
       ask: '询问',
       exit: '退出',
       minimizeToTray: '最小化到托盘',
-    },
-    unm: {
-      enable: '启用',
-      audioSource: {
-        title: '备选音源',
-      },
-      enableFlac: {
-        title: '启用 FLAC',
-        desc: '启用后需要清除歌曲缓存才能生效',
-      },
-      searchMode: {
-        title: '音源搜索模式',
-        fast: '速度优先',
-        order: '顺序优先',
-      },
-      cookie: {
-        joox: 'Joox 引擎的 Cookie',
-        qq: 'QQ 引擎的 Cookie',
-        desc1: '设置说明请参见此处',
-        desc2: '，留空则不进行相关设置',
-      },
-      ytdl: 'YtDl 引擎要使用的 youtube-dl 可执行文件',
-      proxy: {
-        title: '用于 UNM 的代理服务器',
-        desc1: '请求如 YouTube 音源服务时要使用的代理服务器',
-        desc2: '留空则不进行相关设置',
-      },
     },
   },
   contextMenu: {
