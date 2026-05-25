@@ -96,9 +96,10 @@ export function dailySignin() {
  * @param {number=} params.offset
  */
 export function likedAlbums(_params?: { limit?: number; offset?: number }) {
+  const { limit = 50, offset = 0 } = _params || {};
   return getActiveProvider()
-    .getStarred()
-    .then(starred => ({ data: starred.albums }));
+    .getAlbumListByType({ type: 'alphabeticalByName', size: limit, offset })
+    .then(albums => ({ data: albums, hasMore: albums.length >= limit }));
 }
 
 /**
@@ -106,9 +107,10 @@ export function likedAlbums(_params?: { limit?: number; offset?: number }) {
  * 说明 : 调用此接口可获取到用户收藏的歌手
  */
 export function likedArtists(_params?: { limit?: number; offset?: number }) {
+  const { limit = 50, offset = 0 } = _params || {};
   return getActiveProvider()
-    .getStarred()
-    .then(starred => ({ data: starred.artists }));
+    .getArtistList({ limit, offset })
+    .then(result => ({ data: result.artists, hasMore: result.hasMore }));
 }
 
 /**

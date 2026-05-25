@@ -16,6 +16,12 @@ type ActionContextLike = {
   dispatch: (type: string, payload?: any) => Promise<any>;
 };
 
+type PagedFetchParams = {
+  limit?: number;
+  offset?: number;
+  reset?: boolean;
+};
+
 export default {
   showToast({ state, commit }: ActionContextLike, text: string) {
     if (state.toast.timer !== null) {
@@ -162,26 +168,52 @@ export default {
       // TODO:搜索ID登录的用户
     }
   },
-  fetchLikedAlbums: ({ commit }: ActionContextLike) => {
+  fetchLikedAlbums: (
+    { state, commit }: ActionContextLike,
+    params: PagedFetchParams = {}
+  ) => {
     if (!isAccountLoggedIn()) return;
-    return likedAlbums({ limit: 2000 }).then(result => {
+    const { limit = 50, offset = 0, reset = false } = params;
+    return likedAlbums({ limit, offset }).then(result => {
       if (result.data) {
+        const albums = reset ? result.data : [...state.liked.albums];
+        const existingIds = new Set(albums.map(item => String(item.id)));
+        result.data.forEach(item => {
+          if (!existingIds.has(String(item.id))) {
+            albums.push(item);
+            existingIds.add(String(item.id));
+          }
+        });
         commit('updateLikedXXX', {
           name: 'albums',
-          data: result.data,
+          data: albums,
         });
       }
+      return result;
     });
   },
-  fetchLikedArtists: ({ commit }: ActionContextLike) => {
+  fetchLikedArtists: (
+    { state, commit }: ActionContextLike,
+    params: PagedFetchParams = {}
+  ) => {
     if (!isAccountLoggedIn()) return;
-    return likedArtists({ limit: 2000 }).then(result => {
+    const { limit = 50, offset = 0, reset = false } = params;
+    return likedArtists({ limit, offset }).then(result => {
       if (result.data) {
+        const artists = reset ? result.data : [...state.liked.artists];
+        const existingIds = new Set(artists.map(item => String(item.id)));
+        result.data.forEach(item => {
+          if (!existingIds.has(String(item.id))) {
+            artists.push(item);
+            existingIds.add(String(item.id));
+          }
+        });
         commit('updateLikedXXX', {
           name: 'artists',
-          data: result.data,
+          data: artists,
         });
       }
+      return result;
     });
   },
   fetchLikedMVs: ({ commit }: ActionContextLike) => {

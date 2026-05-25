@@ -3,7 +3,7 @@ import type { Plugin } from 'vuex';
 import state from './state';
 import mutations from './mutations';
 import actions from './actions';
-import { changeAppearance } from '@/utils/common';
+import { changeAppearance } from '@/utils/appearance';
 import Player from '@/utils/Player';
 // vuex 自定义插件
 import saveToLocalStorage from './plugins/localStorage';

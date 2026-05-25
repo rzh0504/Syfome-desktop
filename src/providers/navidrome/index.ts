@@ -54,6 +54,11 @@ type AlbumListParams = {
   offset?: number;
 };
 
+type ArtistListParams = {
+  limit?: number;
+  offset?: number;
+};
+
 type UpdatePlaylistTracksParams = {
   pid: Id;
   op: 'add' | 'del' | string;
@@ -384,6 +389,35 @@ export async function getAllArtists() {
     .flatMap(index => index.artist || [])
     .filter(Boolean)
     .map(mapArtist);
+}
+
+export async function getArtistList({
+  limit = 50,
+  offset = 0,
+}: ArtistListParams = {}) {
+  const safeLimit = Math.max(1, Number(limit) || 50);
+  const safeOffset = Math.max(0, Number(offset) || 0);
+
+  try {
+    const response = await requestSubsonic('search3', {
+      query: '',
+      artistCount: safeLimit,
+      artistOffset: safeOffset,
+      albumCount: 0,
+      songCount: 0,
+    });
+    const rawArtists = response.searchResult3?.artist || [];
+    return {
+      artists: rawArtists.map(mapArtist),
+      hasMore: rawArtists.length >= safeLimit,
+    };
+  } catch (_error) {
+    const artists = await getAllArtists();
+    return {
+      artists: artists.slice(safeOffset, safeOffset + safeLimit),
+      hasMore: artists.length > safeOffset + safeLimit,
+    };
+  }
 }
 
 export async function getSongDetails(ids: string | number) {

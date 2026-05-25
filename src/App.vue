@@ -125,10 +125,7 @@ export default defineComponent({
         .dispatch('fetchLikedSongs')
         .then(() => this.$store.dispatch('fetchLikedSongsWithDetails'))
         .then(() => this.$store.dispatch('fetchLikedPlaylist'));
-      if (isAccountLoggedIn()) {
-        this.$store.dispatch('fetchLikedAlbums');
-        this.$store.dispatch('fetchLikedArtists');
-      }
+      if (isAccountLoggedIn()) return;
     },
     handleScroll(): void {
       (this.$refs.scrollbar as ScrollbarInstance | undefined)?.handleScroll();
