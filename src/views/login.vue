@@ -109,7 +109,7 @@ export default defineComponent({
     // justify-content: space-around;
     align-items: center;
 
-    color: #335eea;
+    color: var(--color-primary);
   }
 
   .title-info {

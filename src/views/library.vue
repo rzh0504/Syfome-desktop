@@ -887,12 +887,12 @@ h1 {
   .icon,
   .play-btn {
     background: rgba(255, 255, 255, 0.1);
-    color: #82a3ff;
+    color: var(--color-primary);
     border-color: rgba(255, 255, 255, 0.08);
   }
 
   .lyrics-preview {
-    color: #8ba8ff;
+    color: var(--color-primary);
   }
 
   .play-btn:hover {

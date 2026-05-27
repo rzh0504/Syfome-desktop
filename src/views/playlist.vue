@@ -45,7 +45,7 @@
             :icon-button="true"
             :horizontal-padding="0"
             :color="playlist.subscribed ? 'blue' : 'grey'"
-            :text-color="playlist.subscribed ? '#335eea' : ''"
+            :text-color="playlist.subscribed ? 'var(--color-primary)' : ''"
             :background-color="
               playlist.subscribed ? 'var(--color-secondary-bg)' : ''
             "
@@ -106,7 +106,7 @@
           :icon-button="true"
           :horizontal-padding="0"
           :color="playlist.subscribed ? 'blue' : 'grey'"
-          :text-color="playlist.subscribed ? '#335eea' : ''"
+          :text-color="playlist.subscribed ? 'var(--color-primary)' : ''"
           :background-color="
             playlist.subscribed ? 'var(--color-secondary-bg)' : ''
           "
