@@ -1119,7 +1119,9 @@ export default defineComponent({
   transition: all 0.4s;
 }
 
-.slide-up-enter, .slide-up-leave-to /* .fade-leave-active below version 2.1.8 */ {
+.slide-up-enter,
+.slide-up-enter-from,
+.slide-up-leave-to {
   transform: translateY(100%);
 }
 
