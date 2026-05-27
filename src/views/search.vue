@@ -89,7 +89,7 @@ type SearchType = 'all' | 'tracks' | 'albums' | 'artists' | 'playlists';
 type SearchItem = {
   id: TrackId;
   name: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type SearchResult = {
@@ -97,7 +97,7 @@ type SearchResult = {
   artists?: SearchItem[];
   albums?: SearchItem[];
   playlists?: SearchItem[];
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type SearchResponse =

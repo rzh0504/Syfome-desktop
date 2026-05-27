@@ -5,7 +5,7 @@ const HOME_DAILY_CACHE_PREFIX = 'syfom-home-daily';
 
 type HomeAlbumsType = 'newest' | 'recent' | 'random' | 'frequent';
 
-function readJsonStorage(key: string): Record<string, any> {
+function readJsonStorage(key: string): Record<string, unknown> {
   if (typeof localStorage === 'undefined') return {};
 
   try {
@@ -19,12 +19,13 @@ function readJsonStorage(key: string): Record<string, any> {
 function getHomeDailyCacheScope(): string {
   const data = readJsonStorage('data');
   const session = readJsonStorage('navidromeSession');
-  return [
-    data.activeProvider || 'navidrome',
-    session.serverUrl || '',
-    session.username || '',
-    session.token || '',
-  ].join('|');
+  const activeProvider =
+    typeof data.activeProvider === 'string' ? data.activeProvider : 'navidrome';
+  const serverUrl =
+    typeof session.serverUrl === 'string' ? session.serverUrl : '';
+  const username = typeof session.username === 'string' ? session.username : '';
+  const token = typeof session.token === 'string' ? session.token : '';
+  return [activeProvider, serverUrl, username, token].join('|');
 }
 
 function requestWithHomeDailyCache<T>(

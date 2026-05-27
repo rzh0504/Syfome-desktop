@@ -160,7 +160,7 @@ type ArtistAlbum = {
   publishTime: string | number | Date;
   type: string;
   size: number;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type ContextMenuInstance = {
@@ -276,7 +276,7 @@ export default defineComponent({
       followAArtist({
         id: this.artist.id,
         t: this.artist.followed ? 0 : 1,
-      }).then((data: any) => {
+      }).then((data: { code?: number }) => {
         if (data.code === 200) this.artist.followed = !this.artist.followed;
       });
     },

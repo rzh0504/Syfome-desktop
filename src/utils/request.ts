@@ -36,8 +36,8 @@ service.interceptors.response.use(
     return res;
   },
   async (error: AxiosError | string) => {
-    let response: any;
-    let data: any;
+    let response: AxiosError['response'] | string | undefined;
+    let data: unknown;
     if (error === 'TypeError: baseURL is undefined') {
       response = error;
       data = error;
@@ -47,7 +47,13 @@ service.interceptors.response.use(
       data = response.data;
     }
 
-    if (response && typeof data === 'object' && data.code === 401) {
+    if (
+      response &&
+      data &&
+      typeof data === 'object' &&
+      'code' in data &&
+      data.code === 401
+    ) {
       doLogout();
       router.push({ name: 'login' });
     }

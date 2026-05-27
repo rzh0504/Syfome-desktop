@@ -38,7 +38,22 @@ const log = (...text: unknown[]) => {
 };
 const INTERNAL_SERVER_PORT = 27329;
 
-type AppStore = Store<Record<string, any>>;
+type AppStore = Store<Record<string, unknown>>;
+
+type DevtoolsInstallerModule = {
+  default?: typeof devtoolsInstaller;
+};
+
+type PlayerSnapshot = {
+  _isPersonalFM?: boolean;
+  _personalFMTrack?: unknown;
+  _currentTrack?: unknown;
+  _progress?: number;
+};
+
+function numberSetting(value: unknown, fallback: number): number {
+  return typeof value === 'number' ? value : fallback;
+}
 
 const closeOnLinux = (e: Event, win: BrowserWindow, store: AppStore) => {
   let closeOpt = store.get('settings.closeAppOption');
@@ -97,7 +112,7 @@ class Background {
         width: { type: 'number', default: 1440 },
         height: { type: 'number', default: 840 },
       },
-    } as any) as AppStore;
+    } as unknown as Record<string, unknown>) as AppStore;
     this.expressApp = null;
     this.willQuitApp = !isMac;
 
@@ -126,11 +141,14 @@ class Background {
     if (process.env.ENABLE_VUE_DEVTOOLS !== 'true') return;
 
     try {
-      const installerModule = devtoolsInstaller as any;
+      const installerModule = devtoolsInstaller as unknown as
+        | typeof devtoolsInstaller
+        | DevtoolsInstallerModule;
       const installExtension =
         typeof installerModule === 'function'
           ? installerModule
           : installerModule.default;
+      if (!installExtension) return;
       await installExtension(VUEJS3_DEVTOOLS);
     } catch (e) {
       console.error('Vue Devtools failed to install:', String(e));
@@ -167,7 +185,7 @@ class Background {
       }
       this.window.webContents
         .executeJavaScript('window.yesplaymusic.player')
-        .then((result: any) => {
+        .then((result: PlayerSnapshot) => {
           res.send({
             currentTrack: result._isPersonalFM
               ? result._personalFMTrack
@@ -186,8 +204,8 @@ class Background {
     const showLibraryDefault = this.store.get('settings.showLibraryDefault');
 
     const options: BrowserWindowConstructorOptions = {
-      width: this.store.get('window.width') || 1440,
-      height: this.store.get('window.height') || 840,
+      width: numberSetting(this.store.get('window.width'), 1440),
+      height: numberSetting(this.store.get('window.height'), 840),
       minWidth: 1080,
       minHeight: 720,
       titleBarStyle: 'hiddenInset',
@@ -211,10 +229,9 @@ class Background {
           : '#fff',
     };
 
-    if (this.store.get('window.x') && this.store.get('window.y')) {
-      let x = this.store.get('window.x');
-      let y = this.store.get('window.y');
-
+    const x = numberSetting(this.store.get('window.x'), Number.NaN);
+    const y = numberSetting(this.store.get('window.y'), Number.NaN);
+    if (Number.isFinite(x) && Number.isFinite(y)) {
       let displays = screen.getAllDisplays();
       let isResetWindiw = false;
       if (displays.length === 1) {
@@ -351,8 +368,7 @@ class Background {
       win.webContents.send('isMaximized', false);
     });
 
-    win.webContents.on('new-window' as any, function (e: any, url: string) {
-      e.preventDefault();
+    win.webContents.setWindowOpenHandler(({ url }) => {
       log('open url');
       const excludeHosts = ['www.last.fm'];
       const exclude = excludeHosts.find(host => url.includes(host));
@@ -369,9 +385,10 @@ class Background {
           },
         });
         newWindow.loadURL(url);
-        return;
+        return { action: 'deny' };
       }
       shell.openExternal(url);
+      return { action: 'deny' };
     });
   }
 
@@ -417,7 +434,7 @@ class Background {
       const proxyRules = this.store.get('proxy');
       if (proxyRules) {
         this.window.webContents.session
-          .setProxy({ proxyRules })
+          .setProxy({ proxyRules: String(proxyRules) })
           .then(() => log('finished setProxy'));
       }
 

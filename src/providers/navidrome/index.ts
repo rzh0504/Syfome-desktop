@@ -13,6 +13,12 @@ import {
   mapPlaylist,
   mapSong,
 } from './mappers';
+import type {
+  NavidromeAlbum,
+  NavidromeArtist,
+  NavidromePlaylist,
+  NavidromeSong,
+} from './mappers';
 
 export const key = 'navidrome';
 
@@ -28,7 +34,32 @@ export const capabilities = {
 };
 
 type Id = string | number;
-type RawRecord = Record<string, any>;
+
+type SearchResultResponse = {
+  song?: NavidromeSong[];
+  artist?: NavidromeArtist[];
+  album?: NavidromeAlbum[];
+};
+
+type SongListResponse = {
+  song?: NavidromeSong[];
+  songs?: { song?: NavidromeSong[] } | NavidromeSong[];
+};
+
+type AlbumListResponse = {
+  album?: NavidromeAlbum[];
+  albumList?: { album?: NavidromeAlbum[] };
+  albumList2?: { album?: NavidromeAlbum[] };
+};
+
+type LyricsLine = {
+  value?: string;
+  start?: string | number;
+};
+
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== null && value !== undefined;
+}
 
 type LoginParams = {
   serverUrl: string;
@@ -77,26 +108,31 @@ async function getSongsByAlbumIds(albumIds: Id[] = []) {
 
   const albums = await Promise.all(
     unique.map(id =>
-      requestSubsonic('getAlbum', { id })
+      requestSubsonic<{ album?: NavidromeAlbum & { song?: NavidromeSong[] } }>(
+        'getAlbum',
+        { id }
+      )
         .then(response => response.album)
         .catch(() => null)
     )
   );
 
   return albums
-    .filter(Boolean)
+    .filter(isPresent)
     .flatMap(album => (album.song || []).slice(0, 5).map(mapSong))
     .slice(0, 24);
 }
 
-function parseSongListResponse(response: RawRecord) {
+function parseSongListResponse(response: SongListResponse): NavidromeSong[] {
   if (Array.isArray(response?.song)) return response.song;
-  if (Array.isArray(response?.songs?.song)) return response.songs.song;
+  if (!Array.isArray(response?.songs) && Array.isArray(response?.songs?.song)) {
+    return response.songs.song;
+  }
   if (Array.isArray(response?.songs)) return response.songs;
   return [];
 }
 
-function parseAlbumListResponse(response: RawRecord) {
+function parseAlbumListResponse(response: AlbumListResponse): NavidromeAlbum[] {
   if (Array.isArray(response?.albumList2?.album))
     return response.albumList2.album;
   if (Array.isArray(response?.albumList?.album))
@@ -145,7 +181,9 @@ export async function getProfile() {
 }
 
 export async function getPlaylistList() {
-  const response = await requestSubsonic('getPlaylists');
+  const response = await requestSubsonic<{
+    playlists?: { playlist?: NavidromePlaylist[] };
+  }>('getPlaylists');
   const playlists = response.playlists?.playlist || [];
   return playlists.map(raw => ({
     ...mapPlaylist(raw),
@@ -156,7 +194,10 @@ export async function getPlaylistList() {
 }
 
 export async function getPlaylistDetail(id: Id) {
-  const response = await requestSubsonic('getPlaylist', { id });
+  const response = await requestSubsonic<{ playlist?: NavidromePlaylist }>(
+    'getPlaylist',
+    { id }
+  );
   return mapPlaylist(response.playlist || {});
 }
 
@@ -210,7 +251,9 @@ export async function updatePlaylistTracks({
 }
 
 export async function getAlbumDetail(id: Id) {
-  const response = await requestSubsonic('getAlbum', { id });
+  const response = await requestSubsonic<{
+    album?: NavidromeAlbum & { song?: NavidromeSong[] };
+  }>('getAlbum', { id });
   const album = mapAlbum(response.album || {});
   const songs = (response.album?.song || []).map(mapSong);
   return {
@@ -220,7 +263,9 @@ export async function getAlbumDetail(id: Id) {
 }
 
 export async function getArtistDetail(id: Id) {
-  const response = await requestSubsonic('getArtist', { id });
+  const response = await requestSubsonic<{
+    artist?: NavidromeArtist & { album?: NavidromeAlbum[] };
+  }>('getArtist', { id });
   const artistRaw = response.artist || {};
   const artist = mapArtist(artistRaw);
   const hotSongs = await getSongsByAlbumIds(
@@ -233,7 +278,9 @@ export async function getArtistDetail(id: Id) {
 }
 
 export async function getArtistAlbums(id: Id, limit = 200) {
-  const response = await requestSubsonic('getArtist', { id });
+  const response = await requestSubsonic<{
+    artist?: { album?: NavidromeAlbum[] };
+  }>('getArtist', { id });
   const albums = (response.artist?.album || []).map(mapAlbum);
   return {
     hotAlbums: albums.slice(0, limit),
@@ -264,7 +311,9 @@ export async function searchAll({
     };
   }
 
-  const response = await requestSubsonic('search3', {
+  const response = await requestSubsonic<{
+    searchResult3?: SearchResultResponse;
+  }>('search3', {
     query: keywords,
     songCount: type === 1 || type === 1018 ? limit : 0,
     songOffset: type === 1 || type === 1018 ? offset : 0,
@@ -301,7 +350,7 @@ export async function getLibrarySongs({
   const safeLimit = Math.max(1, Number(limit) || 100);
 
   try {
-    const response = await requestSubsonic('getSongs', {
+    const response = await requestSubsonic<SongListResponse>('getSongs', {
       offset: safeOffset,
       limit: safeLimit,
     });
@@ -312,7 +361,9 @@ export async function getLibrarySongs({
     };
   } catch (_error) {
     try {
-      const response = await requestSubsonic('search3', {
+      const response = await requestSubsonic<{
+        searchResult3?: SearchResultResponse;
+      }>('search3', {
         query: '',
         songCount: safeLimit,
         songOffset: safeOffset,
@@ -325,7 +376,9 @@ export async function getLibrarySongs({
         hasMore: rawSongs.length >= safeLimit,
       };
     } catch (_fallbackError) {
-      const response = await requestSubsonic('getRandomSongs', {
+      const response = await requestSubsonic<{
+        randomSongs?: { song?: NavidromeSong[] };
+      }>('getRandomSongs', {
         size: safeLimit,
       });
       const rawSongs = response.randomSongs?.song || [];
@@ -338,7 +391,9 @@ export async function getLibrarySongs({
 }
 
 export async function refreshLibrary() {
-  const response = await requestSubsonic('startScan');
+  const response = await requestSubsonic<{
+    scanStatus?: { scanning?: boolean; count?: number };
+  }>('startScan');
   return {
     code: 200,
     scanning: Boolean(response.scanStatus?.scanning),
@@ -348,7 +403,9 @@ export async function refreshLibrary() {
 
 export async function getRandomSongs(size = 24) {
   const safeSize = Math.max(1, Number(size) || 24);
-  const response = await requestSubsonic('getRandomSongs', {
+  const response = await requestSubsonic<{
+    randomSongs?: { song?: NavidromeSong[] };
+  }>('getRandomSongs', {
     size: safeSize,
   });
   const rawSongs = response.randomSongs?.song || [];
@@ -362,7 +419,7 @@ export async function getAlbumListByType({
 }: AlbumListParams = {}) {
   const safeSize = Math.max(1, Number(size) || 24);
   const safeOffset = Math.max(0, Number(offset) || 0);
-  const response = await requestSubsonic('getAlbumList2', {
+  const response = await requestSubsonic<AlbumListResponse>('getAlbumList2', {
     type,
     size: safeSize,
     offset: safeOffset,
@@ -372,7 +429,9 @@ export async function getAlbumListByType({
 }
 
 export async function getAllArtists() {
-  const response = await requestSubsonic('getArtists');
+  const response = await requestSubsonic<{
+    artists?: { index?: { artist?: NavidromeArtist[] }[] };
+  }>('getArtists');
   const indexes = response.artists?.index || [];
   return indexes
     .flatMap(index => index.artist || [])
@@ -388,7 +447,9 @@ export async function getArtistList({
   const safeOffset = Math.max(0, Number(offset) || 0);
 
   try {
-    const response = await requestSubsonic('search3', {
+    const response = await requestSubsonic<{
+      searchResult3?: SearchResultResponse;
+    }>('search3', {
       query: '',
       artistCount: safeLimit,
       artistOffset: safeOffset,
@@ -417,23 +478,25 @@ export async function getSongDetails(ids: string | number) {
 
   const songs = await Promise.all(
     idList.map(id =>
-      requestSubsonic('getSong', { id })
+      requestSubsonic<{ song?: NavidromeSong }>('getSong', { id })
         .then(response => mapSong(response.song || {}))
         .catch(() => null)
     )
   );
 
   return {
-    songs: songs.filter(Boolean),
+    songs: songs.filter(isPresent),
     privileges: songs
-      .filter(Boolean)
+      .filter(isPresent)
       .map(song => ({ id: song.id, pl: 320000 })),
   };
 }
 
 export async function getLyrics(id: Id) {
   try {
-    const response = await requestSubsonic('getLyricsBySongId', { id });
+    const response = await requestSubsonic<{
+      lyricsList?: { structuredLyrics?: { line?: LyricsLine[] }[] };
+    }>('getLyricsBySongId', { id });
     const structuredLyrics = response.lyricsList?.structuredLyrics;
     if (Array.isArray(structuredLyrics) && structuredLyrics.length > 0) {
       const lines = structuredLyrics[0].line || [];
@@ -490,7 +553,9 @@ export async function starArtist(id: Id, like = true) {
 }
 
 export async function getStarred() {
-  const response = await requestSubsonic('getStarred2');
+  const response = await requestSubsonic<{
+    starred2?: SearchResultResponse;
+  }>('getStarred2');
   const starred = response.starred2 || {};
 
   return {

@@ -80,7 +80,7 @@ type PlaylistItem = {
   id: TrackId;
   name: string;
   updateTime?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type SettingsState = {

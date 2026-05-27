@@ -9,7 +9,7 @@ import Player from '@/utils/Player';
 import saveToLocalStorage from './plugins/localStorage';
 import { getSendSettingsPlugin } from './plugins/sendSettings';
 
-let plugins: Plugin<any>[] = [saveToLocalStorage];
+let plugins: Plugin<typeof state>[] = [saveToLocalStorage];
 if (Boolean(process.env.IS_ELECTRON)) {
   let sendSettings = getSendSettingsPlugin();
   plugins.push(sendSettings);
@@ -53,7 +53,7 @@ let player = new Player();
 player = new Proxy(player, {
   set(target, prop, val) {
     // console.log({ prop, val });
-    (target as any)[prop] = val;
+    (target as unknown as Record<PropertyKey, unknown>)[prop] = val;
     if (typeof prop === 'string' && ['_howler', '_progress'].includes(prop)) {
       return true;
     }

@@ -2,7 +2,7 @@ import { buildCoverArtUrl, buildStreamUrl } from './client';
 
 const SOURCE = 'navidrome';
 
-type NavidromeArtist = {
+export type NavidromeArtist = {
   id?: string;
   name?: string;
   coverArt?: string;
@@ -12,7 +12,7 @@ type NavidromeArtist = {
   starred?: string | boolean;
 };
 
-type NavidromeAlbum = {
+export type NavidromeAlbum = {
   id?: string;
   name?: string;
   title?: string;
@@ -26,7 +26,7 @@ type NavidromeAlbum = {
   comment?: string;
 };
 
-type NavidromeSong = {
+export type NavidromeSong = {
   id?: string;
   title?: string;
   name?: string;
@@ -45,7 +45,7 @@ type NavidromeSong = {
   playCount?: string | number;
 };
 
-type NavidromePlaylist = {
+export type NavidromePlaylist = {
   id?: string;
   name?: string;
   entry?: NavidromeSong[];

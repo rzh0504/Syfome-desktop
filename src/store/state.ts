@@ -1,11 +1,19 @@
 import initLocalStorage from './initLocalStorage';
 import pkg from '../../package.json';
 import updateApp from '@/utils/updateApp';
+import type { TrackId } from '@/types/music';
 
-type JsonRecord = Record<string, any>;
+type JsonRecord = Record<string, unknown>;
+type PersistedPlayer = JsonRecord & {
+  isPersonalFM: boolean;
+  playlistSource: {
+    id: TrackId;
+    type: string;
+  };
+};
 
-function readStorageObject(key: string): JsonRecord {
-  return JSON.parse(localStorage.getItem(key) || '{}');
+function readStorageObject<T extends JsonRecord = JsonRecord>(key: string): T {
+  return JSON.parse(localStorage.getItem(key) || '{}') as T;
 }
 
 if (localStorage.getItem('appVersion') === null) {
@@ -51,7 +59,7 @@ export default {
     },
   },
   dailyTracks: [],
-  player: readStorageObject('player'),
+  player: readStorageObject<PersistedPlayer>('player'),
   settings: readStorageObject('settings'),
   data: readStorageObject('data'),
 };

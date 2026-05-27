@@ -80,7 +80,7 @@ function artworkFor(track: Track, size: number): string {
 }
 
 export default class Player {
-  [key: string]: any;
+  [key: string]: unknown;
 
   _playing: boolean;
   _progress: number;

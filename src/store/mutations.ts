@@ -1,11 +1,35 @@
 import shortcuts from '@/utils/shortcuts';
 import cloneDeep from 'lodash/cloneDeep';
+import type { Shortcut } from '@/utils/shortcuts';
 
-type AppState = Record<string, any>;
-type KeyValuePayload = { key: string; value: any };
+type UnknownRecord = Record<string, unknown>;
+type SourcePayload = { key: string } & UnknownRecord;
+type ShortcutLike = Shortcut & { [key: string]: string };
+type AppState = {
+  liked: UnknownRecord;
+  player: { sendSelfToIpcMain: () => void };
+  settings: UnknownRecord & {
+    enabledPlaylistCategories: string[];
+    shortcuts: ShortcutLike[];
+  };
+  data: UnknownRecord & {
+    activeProvider?: string;
+    sources?: Record<string, SourcePayload>;
+  };
+  toast: unknown;
+  modals: Record<string, UnknownRecord>;
+  dailyTracks: unknown[];
+  showLyrics: boolean;
+  enableScrolling: boolean;
+  title: string;
+};
+type KeyValuePayload = { key: string; value: unknown };
 
 export default {
-  updateLikedXXX(state: AppState, { name, data }: { name: string; data: any }) {
+  updateLikedXXX(
+    state: AppState,
+    { name, data }: { name: string; data: unknown }
+  ) {
     state.liked[name] = data;
     if (name === 'songs') {
       state.player.sendSelfToIpcMain();
@@ -32,7 +56,7 @@ export default {
   setActiveProvider(state: AppState, provider: string) {
     state.data.activeProvider = provider;
   },
-  upsertSource(state: AppState, source: { key: string; [key: string]: any }) {
+  upsertSource(state: AppState, source: SourcePayload) {
     const sources = state.data.sources || {};
     state.data.sources = {
       ...sources,
@@ -61,12 +85,16 @@ export default {
       state.settings.enabledPlaylistCategories.push(name);
     }
   },
-  updateToast(state: AppState, toast: any) {
+  updateToast(state: AppState, toast: unknown) {
     state.toast = toast;
   },
   updateModal(
     state: AppState,
-    { modalName, key, value }: { modalName: string; key: string; value: any }
+    {
+      modalName,
+      key,
+      value,
+    }: { modalName: string; key: string; value: unknown }
   ) {
     state.modals[modalName][key] = value;
     if (key === 'show') {
@@ -79,7 +107,7 @@ export default {
   toggleLyrics(state: AppState) {
     state.showLyrics = !state.showLyrics;
   },
-  updateDailyTracks(state: AppState, dailyTracks: any[]) {
+  updateDailyTracks(state: AppState, dailyTracks: unknown[]) {
     state.dailyTracks = dailyTracks;
   },
   updateShortcut(
@@ -87,6 +115,7 @@ export default {
     { id, type, shortcut }: { id: string; type: string; shortcut: string }
   ) {
     let newShortcut = state.settings.shortcuts.find(s => s.id === id);
+    if (!newShortcut) return;
     newShortcut[type] = shortcut;
     state.settings.shortcuts = state.settings.shortcuts.map(s => {
       if (s.id !== id) return s;

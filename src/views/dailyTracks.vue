@@ -17,10 +17,9 @@
 import { defineComponent } from 'vue';
 import NProgress from 'nprogress';
 import { dailyRecommendTracks } from '@/api/playlist';
+import type { Track } from '@/types/music';
 
 import TrackList from '@/components/TrackList.vue';
-
-type Track = Record<string, any>;
 
 export default defineComponent({
   name: 'DailyTracks',

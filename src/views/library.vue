@@ -273,7 +273,7 @@ type PagedFetchResult<T = unknown> = {
 type PlaylistLike = {
   id?: TrackId;
   creator?: { userId?: TrackId; nickname?: string };
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type ContextMenuInstance = {

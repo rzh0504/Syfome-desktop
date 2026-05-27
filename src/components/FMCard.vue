@@ -66,6 +66,13 @@ type PaletteLike = {
   };
 };
 
+type VibrantWorker = {
+  from: (
+    cover: string,
+    options: { colorCount: number }
+  ) => { getPalette: () => Promise<PaletteLike> };
+};
+
 const emptyTrack: FMTrack = { id: 0, name: '', album: { id: 0, picUrl: '' } };
 
 export default defineComponent({
@@ -125,7 +132,7 @@ export default defineComponent({
         'http://',
         'https://'
       )}?param=512y512`;
-      (Vibrant as any)
+      (Vibrant as unknown as VibrantWorker)
         .from(cover, { colorCount: 1 })
         .getPalette()
         .then((palette: PaletteLike) => {

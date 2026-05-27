@@ -8,7 +8,7 @@ import type { Shortcut } from '@/utils/shortcuts';
 const isMac = process.platform === 'darwin';
 
 type StoreLike = {
-  get: (key: string) => Shortcut[] | undefined;
+  get: (key: string) => unknown;
 };
 
 function getShortcut(shortcuts: Shortcut[], id: string): Shortcut {
@@ -18,13 +18,13 @@ function getShortcut(shortcuts: Shortcut[], id: string): Shortcut {
 }
 
 export function createMenu(win: BrowserWindow, store: StoreLike): void {
-  let shortcuts = store.get('settings.shortcuts');
-  if (shortcuts === undefined) {
-    shortcuts = defaultShortcuts;
-  }
+  const storedShortcuts = store.get('settings.shortcuts');
+  const shortcuts = Array.isArray(storedShortcuts)
+    ? (storedShortcuts as Shortcut[])
+    : defaultShortcuts;
 
   let menu: Menu | null = null;
-  const template: any[] = [
+  const template = [
     ...(isMac
       ? [
           {

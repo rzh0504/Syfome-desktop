@@ -10,10 +10,40 @@ import {
   userAccount,
 } from '@/api/user';
 
+type Id = string | number;
+type IdentifiedRecord = { id?: Id; [key: string]: unknown };
+type UserProfile = {
+  userId?: Id;
+  avatarUrl?: string;
+  nickname?: string;
+};
+type PlayHistoryEntry = IdentifiedRecord & {
+  playTime?: string | number;
+  track?: IdentifiedRecord;
+};
+type ActionState = {
+  toast: {
+    timer: ReturnType<typeof setTimeout> | null;
+    text: string;
+  };
+  liked: {
+    songs: Id[];
+    songsWithDetails: IdentifiedRecord[];
+    playlists: IdentifiedRecord[];
+    albums: IdentifiedRecord[];
+    artists: IdentifiedRecord[];
+  };
+  data: {
+    user?: UserProfile;
+    localPlayHistory?: PlayHistoryEntry[];
+    [key: string]: unknown;
+  };
+};
+
 type ActionContextLike = {
-  state: Record<string, any>;
-  commit: (type: string, payload?: any) => void;
-  dispatch: (type: string, payload?: any) => Promise<any>;
+  state: ActionState;
+  commit: (type: string, payload?: unknown) => void;
+  dispatch: (type: string, payload?: unknown) => Promise<unknown>;
 };
 
 type PagedFetchParams = {
@@ -219,7 +249,7 @@ export default {
   fetchPlayHistory: ({ state, commit }: ActionContextLike) => {
     const history = state.data.localPlayHistory || [];
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const toTrack = item => item.track || item;
+    const toTrack = (item: PlayHistoryEntry) => item.track || item;
     commit('updateLikedXXX', {
       name: 'playHistory',
       data: {

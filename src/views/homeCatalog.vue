@@ -39,7 +39,7 @@ import { dailyShuffle } from '@/utils/dailyRandom';
 type CatalogItem = {
   id: string | number;
   name: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type Catalog = {

@@ -1,6 +1,11 @@
 import type { Store } from 'vuex';
 
-export default (store: Store<any>) => {
+type PersistedState = {
+  settings: unknown;
+  data: unknown;
+};
+
+export default (store: Store<PersistedState>) => {
   store.subscribe((mutation, state) => {
     // console.log(mutation);
     localStorage.setItem('settings', JSON.stringify(state.settings));

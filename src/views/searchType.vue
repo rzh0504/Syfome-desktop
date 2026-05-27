@@ -53,7 +53,7 @@ type SearchType = 'tracks' | 'albums' | 'artists' | 'playlists';
 type SearchItem = {
   id: TrackId;
   name: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 type SearchResult = {
   hasMore?: boolean;

@@ -4,7 +4,15 @@ const player = store.state.player;
 
 type RendererVueInstance = {
   $router: { push: (path: string) => void };
-  $refs: Record<string, any>;
+  $refs: {
+    navbar: {
+      $refs: { searchInput: { focus: () => void } };
+      inputFocus: boolean;
+      go: (where: unknown) => void;
+    };
+    player: { goToNextTracksPage: () => void };
+    [key: string]: unknown;
+  };
 };
 
 export function ipcRenderer(vueInstance: RendererVueInstance): void {
@@ -19,6 +27,7 @@ export function ipcRenderer(vueInstance: RendererVueInstance): void {
   // responds to Menu click() events at the main process and changes the route accordingly.
 
   electronAPI?.on('changeRouteTo', path => {
+    if (typeof path !== 'string') return;
     self.$router.push(path);
     if (store.state.showLyrics) {
       store.commit('toggleLyrics');
@@ -89,6 +98,7 @@ export function ipcRenderer(vueInstance: RendererVueInstance): void {
   });
 
   electronAPI?.on('setPosition', position => {
+    if (typeof position !== 'number') return;
     player._howler.seek(position);
   });
 }

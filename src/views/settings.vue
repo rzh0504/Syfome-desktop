@@ -858,9 +858,10 @@ export default defineComponent({
             ? `已刷新媒体库，读取 ${count} 首歌曲`
             : '已开始刷新媒体库'
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.refreshingLibrary = false;
-        this.showToast(`刷新媒体库失败：${error.message || error}`);
+        const message = error instanceof Error ? error.message : String(error);
+        this.showToast(`刷新媒体库失败：${message}`);
       }
     },
     getAllOutputDevices() {

@@ -9,8 +9,8 @@ import { isCreateTray, isMac } from '@/utils/platform';
 
 const clc = require('cli-color');
 type StoreLike = {
-  get: (key: string) => any;
-  set: (key: string, value: any) => void;
+  get: (key: string) => unknown;
+  set: (key: string, value: unknown) => void;
 };
 
 type ProxyConfig = {
@@ -23,6 +23,11 @@ type ShortcutUpdate = {
   id: string;
   type: keyof Shortcut;
   shortcut: string;
+};
+
+type SettingsPayload = {
+  enableGlobalShortcut?: boolean;
+  [key: string]: unknown;
 };
 
 const log = (text: unknown) => {
@@ -125,7 +130,7 @@ export function initIpcMain(
     });
   });
 
-  ipcMain.on('settings', (_event, options: any) => {
+  ipcMain.on('settings', (_event, options: SettingsPayload) => {
     store.set('settings', options);
     if (options.enableGlobalShortcut) {
       registerGlobalShortcut(win, store);

@@ -9,6 +9,13 @@ import type { Track, TrackId } from '@/types/music';
 
 type PrivilegeLike = {
   id: TrackId;
+  pl?: number;
+  [key: string]: unknown;
+};
+
+type TrackDetailResult = {
+  songs: Track[];
+  privileges: PrivilegeLike[];
 };
 
 type LibrarySongsParams = {
@@ -67,7 +74,7 @@ export function getTrackDetail(ids: TrackId) {
     return Promise.resolve({ songs: [], privileges: [] });
   }
 
-  const fetchLatest = () => {
+  const fetchLatest = (): Promise<TrackDetailResult> => {
     return getActiveProvider()
       .getSongDetails(idsInArray.join(','))
       .then(data => {

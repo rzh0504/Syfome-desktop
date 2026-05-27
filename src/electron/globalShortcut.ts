@@ -9,7 +9,7 @@ const log = (text: string) => {
 };
 
 type StoreLike = {
-  get: (key: string) => Shortcut[] | undefined;
+  get: (key: string) => unknown;
 };
 
 function getShortcut(shortcuts: Shortcut[], id: string): Shortcut {
@@ -23,10 +23,10 @@ export function registerGlobalShortcut(
   store: StoreLike
 ): void {
   log('registerGlobalShortcut');
-  let shortcuts = store.get('settings.shortcuts');
-  if (shortcuts === undefined) {
-    shortcuts = defaultShortcuts;
-  }
+  const storedShortcuts = store.get('settings.shortcuts');
+  const shortcuts = Array.isArray(storedShortcuts)
+    ? (storedShortcuts as Shortcut[])
+    : defaultShortcuts;
 
   globalShortcut.register(getShortcut(shortcuts, 'play').globalShortcut, () => {
     win.webContents.send('play');

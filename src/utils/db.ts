@@ -1,13 +1,14 @@
 import axios from 'axios';
 import Dexie from 'dexie';
 import store from '@/store';
+import type { Track, TrackId } from '@/types/music';
 // import pkg from "../../package.json";
 
 type TrackLike = {
-  id?: string | number;
-  uid?: string | number;
-  cacheKey?: string | number;
-  sourceId?: string | number;
+  id?: TrackId;
+  uid?: TrackId;
+  cacheKey?: TrackId;
+  sourceId?: TrackId;
   source?: string;
   name?: string;
   ar?: { name?: string }[];
@@ -16,8 +17,8 @@ type TrackLike = {
 };
 
 type TrackSource = {
-  id: string | number;
-  sourceId?: string | number;
+  id: TrackId;
+  sourceId?: TrackId;
   source: ArrayBuffer;
   bitRate?: number;
   from?: string;
@@ -26,20 +27,39 @@ type TrackSource = {
   createTime: number;
 };
 
+type TrackPrivilege = {
+  id: TrackId;
+  pl?: number;
+  [key: string]: unknown;
+};
+
+type LyricPayload = {
+  lrc: { lyric: string };
+  tlyric: { lyric: string };
+  romalrc: { lyric: string };
+  lyricUser?: unknown;
+  transUser?: unknown;
+};
+
+type AlbumDetailPayload = {
+  album?: unknown;
+  songs?: Track[];
+};
+
 type TrackDetailCache = {
-  id: string | number;
-  detail: any;
-  privileges: any;
+  id: TrackId;
+  detail: Track;
+  privileges?: TrackPrivilege;
   updateTime: number;
 };
 
-type LyricCache = { id: string | number; lyrics: any; updateTime: number };
-type AlbumCache = { id: string; album: any; updateTime: number };
+type LyricCache = { id: TrackId; lyrics: LyricPayload; updateTime: number };
+type AlbumCache = { id: string; album: AlbumDetailPayload; updateTime: number };
 
 type AppDexie = Dexie & {
-  trackSources: Dexie.Table<TrackSource, string | number>;
-  trackDetail: Dexie.Table<TrackDetailCache, string | number>;
-  lyric: Dexie.Table<LyricCache, string | number>;
+  trackSources: Dexie.Table<TrackSource, TrackId>;
+  trackDetail: Dexie.Table<TrackDetailCache, TrackId>;
+  lyric: Dexie.Table<LyricCache, TrackId>;
   album: Dexie.Table<AlbumCache, string>;
 };
 
@@ -84,9 +104,7 @@ db.version(1).stores({
 
 let tracksCacheBytes = 0;
 
-function getTrackCacheKey(
-  track: TrackLike | string | number
-): string | number | undefined {
+function getTrackCacheKey(track: TrackLike | TrackId): TrackId | undefined {
   if (track && typeof track === 'object') {
     return track.uid || track.cacheKey || track.id;
   }
@@ -165,7 +183,7 @@ export function cacheTrackSource(
     });
 }
 
-export function getTrackSource(id: TrackLike | string | number) {
+export function getTrackSource(id: TrackLike | TrackId) {
   const cacheKey = getTrackCacheKey(id);
   const legacyKey = id && typeof id === 'object' ? id.id : id;
 
@@ -186,7 +204,11 @@ export function getTrackSource(id: TrackLike | string | number) {
   });
 }
 
-export function cacheTrackDetail(track: TrackLike, privileges: any): void {
+export function cacheTrackDetail(
+  track: Track,
+  privileges?: TrackPrivilege
+): void {
+  if (track.id === undefined || track.id === null) return;
   db.trackDetail.put({
     id: track.id,
     detail: track,
@@ -202,23 +224,26 @@ export function getTrackDetailFromCache(ids: string[]) {
     })
     .toArray()
     .then(tracks => {
-      const result: { songs: any[]; privileges: any[] } = {
+      const result: {
+        songs: Track[];
+        privileges: (TrackPrivilege | undefined)[];
+      } = {
         songs: [],
         privileges: [],
       };
-      ids.map(id => {
+      for (const id of ids) {
         const one = tracks.find(t => String(t.id) === id);
-        result.songs.push(one?.detail);
-        result.privileges.push(one?.privileges);
-      });
-      if (result.songs.includes(undefined)) {
-        return undefined;
+        if (!one) {
+          return undefined;
+        }
+        result.songs.push(one.detail);
+        result.privileges.push(one.privileges);
       }
       return result;
     });
 }
 
-export function cacheLyric(id: string | number, lyrics: any): void {
+export function cacheLyric(id: TrackId, lyrics: LyricPayload): void {
   db.lyric.put({
     id,
     lyrics,
@@ -226,14 +251,14 @@ export function cacheLyric(id: string | number, lyrics: any): void {
   });
 }
 
-export function getLyricFromCache(id: string | number) {
+export function getLyricFromCache(id: TrackId) {
   return db.lyric.get(id).then(result => {
     if (result) return result.lyrics;
     return db.lyric.get(String(id)).then(fallback => fallback?.lyrics);
   });
 }
 
-export function cacheAlbum(id: string | number, album: any): void {
+export function cacheAlbum(id: TrackId, album: AlbumDetailPayload): void {
   db.album.put({
     id: String(id),
     album,
@@ -241,7 +266,7 @@ export function cacheAlbum(id: string | number, album: any): void {
   });
 }
 
-export function getAlbumFromCache(id: string | number) {
+export function getAlbumFromCache(id: TrackId) {
   return db.album.get(String(id)).then(result => {
     if (result) return result.album;
     return db.album.get(String(id)).then(fallback => fallback?.album);

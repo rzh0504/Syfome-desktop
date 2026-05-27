@@ -79,7 +79,7 @@ export function shuffleAList(list: Required<Pick<TrackLike, 'id' | 'sort'>>[]) {
   return newSorts;
 }
 
-export function throttle<T extends (...args: any[]) => void>(
+export function throttle<T extends (...args: never[]) => void>(
   fn: T,
   time: number
 ) {

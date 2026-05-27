@@ -90,7 +90,12 @@ import ExplicitSymbol from '@/components/ExplicitSymbol.vue';
 import { isNil } from 'lodash';
 import { resizeImageUrl } from '@/utils/image';
 import { formatTime } from '@/utils/filters';
-import type { TrackId, TrackListTrack } from '@/types/music';
+import type {
+  AlbumSummary,
+  ArtistSummary,
+  TrackId,
+  TrackListTrack,
+} from '@/types/music';
 
 type TrackListParent = {
   type?: string;
@@ -128,26 +133,26 @@ export default defineComponent({
     parentList(): TrackListParent {
       return this.$parent as TrackListParent;
     },
-    track(): any {
+    track(): TrackListTrack {
       return this.trackProp;
     },
     playable(): boolean | undefined {
       return this.track?.privilege?.pl > 0 || this.track?.playable;
     },
-    imgUrl(): any {
+    imgUrl(): string {
       const image =
         this.track?.al?.picUrl ??
         this.track?.album?.picUrl ??
         '/img/logos/yesplaymusic.png';
       return resizeImageUrl(image, 224);
     },
-    artists(): any[] {
+    artists(): ArtistSummary[] {
       const { ar, artists } = this.track;
       if (!isNil(ar)) return ar;
       if (!isNil(artists)) return artists;
       return [];
     },
-    album(): any {
+    album(): AlbumSummary | undefined {
       return this.track.album || this.track.al || this.track?.simpleSong?.al;
     },
     trackName(): string | undefined {
@@ -156,7 +161,7 @@ export default defineComponent({
     trackReason(): string | undefined {
       return this.track.reason;
     },
-    trackArtists(): any[] {
+    trackArtists(): ArtistSummary[] {
       return this.track.ar || [];
     },
     trackDuration(): number | undefined {

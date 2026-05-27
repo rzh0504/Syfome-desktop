@@ -18,8 +18,15 @@
 import { defineComponent } from 'vue';
 import { newAlbums } from '@/api/album';
 import NProgress from 'nprogress';
+import type { TrackId } from '@/types/music';
 
 import CoverRow from '@/components/CoverRow.vue';
+
+type AlbumItem = {
+  id: TrackId;
+  name: string;
+  [key: string]: unknown;
+};
 
 export default defineComponent({
   components: {
@@ -27,7 +34,7 @@ export default defineComponent({
   },
   data() {
     return {
-      albums: [] as any[],
+      albums: [] as AlbumItem[],
     };
   },
   created() {

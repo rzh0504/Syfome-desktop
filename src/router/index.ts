@@ -86,6 +86,18 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/daily/songs',
+    name: 'dailySongs',
+    component: () => import('@/views/dailyTracks.vue'),
+    meta: {
+      requireLogin: true,
+    },
+  },
+  {
+    path: '/home/today-recommend',
+    redirect: '/daily/songs',
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/settings.vue'),

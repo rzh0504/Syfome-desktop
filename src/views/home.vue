@@ -147,7 +147,7 @@ type CatalogKind =
 type CoverItem = {
   id: TrackId;
   name: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type DataState = {

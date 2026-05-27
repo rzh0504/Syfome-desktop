@@ -26,7 +26,7 @@ export function getListSourcePath(): string {
   if (state.player.playlistSource.id === state.data.likedSongPlaylistID) {
     return '/library/liked-songs';
   } else if (state.player.playlistSource.type === 'url') {
-    return state.player.playlistSource.id;
+    return String(state.player.playlistSource.id);
   } else {
     return `/${state.player.playlistSource.type}/${state.player.playlistSource.id}`;
   }

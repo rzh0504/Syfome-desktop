@@ -24,14 +24,13 @@ type AuthParams = {
 
 type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
-type SubsonicWrapper = {
+export type SubsonicWrapper = {
   status?: string;
   error?: {
     code?: string | number;
     message?: string;
   };
-  [key: string]: any;
-};
+} & Record<string, unknown>;
 
 type SubsonicResponse = {
   'subsonic-response'?: SubsonicWrapper;
@@ -41,6 +40,14 @@ function randomSalt(length = 8): string {
   return Math.random()
     .toString(36)
     .slice(2, 2 + length);
+}
+
+function isNavidromeSession(value: unknown): value is NavidromeSession {
+  if (!value || typeof value !== 'object') return false;
+  const session = value as Partial<NavidromeSession>;
+  return Boolean(
+    session.serverUrl && session.username && session.token && session.salt
+  );
 }
 
 export function normalizeServerUrl(serverUrl?: string): string {
@@ -54,13 +61,8 @@ export function readSession(): NavidromeSession | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (
-      !parsed?.serverUrl ||
-      !parsed?.username ||
-      !parsed?.token ||
-      !parsed?.salt
-    ) {
+    const parsed: unknown = JSON.parse(raw);
+    if (!isNavidromeSession(parsed)) {
       return null;
     }
     return parsed;
@@ -149,9 +151,19 @@ function unwrapSubsonicResponse(data: SubsonicResponse): SubsonicWrapper {
 
 export async function requestSubsonic(
   endpoint: string,
+  params?: QueryParams,
+  config?: AxiosRequestConfig
+): Promise<SubsonicWrapper>;
+export async function requestSubsonic<T>(
+  endpoint: string,
+  params?: QueryParams,
+  config?: AxiosRequestConfig
+): Promise<T>;
+export async function requestSubsonic<T = SubsonicWrapper>(
+  endpoint: string,
   params: QueryParams = {},
   config: AxiosRequestConfig = {}
-): Promise<SubsonicWrapper> {
+): Promise<T> {
   const session = readSession();
   const url = buildEndpointUrl(endpoint, session);
   const response = await axios({
@@ -165,7 +177,7 @@ export async function requestSubsonic(
     ...config,
   });
 
-  return unwrapSubsonicResponse(response.data);
+  return unwrapSubsonicResponse(response.data) as T;
 }
 
 export async function loginWithPassword({
@@ -220,7 +232,9 @@ export function buildAvatarUrl(): string {
 
 function getConfiguredMaxBitRate(): number | undefined {
   try {
-    const settings = JSON.parse(localStorage.getItem('settings') || '{}');
+    const settings = JSON.parse(localStorage.getItem('settings') || '{}') as {
+      musicQuality?: string | number;
+    };
     const quality = settings.musicQuality;
     if (quality === 'flac' || quality === '999000') return undefined;
     const bitRate = Number(quality || 320000);

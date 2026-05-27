@@ -40,7 +40,7 @@ export type TrackListTrack = Partial<Track> & {
   mark?: number;
   al?: AlbumSummary & { name?: string };
   ar?: ArtistSummary[];
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type PlayerTrack = TrackListTrack;
