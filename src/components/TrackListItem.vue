@@ -77,7 +77,6 @@
     <div v-if="showTrackTime" class="time">
       {{ formatTrackTime(trackDuration) }}
     </div>
-
   </div>
 </template>
 
