@@ -98,7 +98,9 @@ export default defineComponent({
     },
     shuffleTodayRecommend(): void {
       if (this.todayRecommendTracks.length === 0) return;
-      const trackIDs = shuffle(this.todayRecommendTracks.map(track => track.id));
+      const trackIDs = shuffle(
+        this.todayRecommendTracks.map(track => track.id)
+      );
       const player = this.$store.state.player as PlayerLike;
       player.replacePlaylist(
         trackIDs,
