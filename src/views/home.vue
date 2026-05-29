@@ -8,7 +8,7 @@
 
     <template v-if="isLooseLoggedIn">
       <div class="first-row today-recommend-section">
-        <div class="today-recommend" @click="playTodayRecommend()">
+        <div class="today-recommend" @click="goToTodayRecommend">
           <div class="content">
             <div class="title-group">
               <div class="icon"><svg-icon icon-class="fm" /></div>
@@ -264,6 +264,9 @@ export default defineComponent({
     },
     goToCatalog(kind: CatalogKind): void {
       this.$router.push({ name: 'homeCatalog', params: { kind } });
+    },
+    goToTodayRecommend(): void {
+      this.$router.push('/home/today-recommend');
     },
   },
 });

@@ -95,7 +95,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/home/today-recommend',
-    redirect: '/daily/songs',
+    name: 'todayRecommend',
+    component: () => import('@/views/todayRecommend.vue'),
+    meta: {
+      requireLogin: true,
+    },
   },
   {
     path: '/settings',

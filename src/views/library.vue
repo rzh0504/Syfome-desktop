@@ -338,7 +338,7 @@ function getLibrarySongSortValue(song: Track, sort: LibrarySongsSort): number {
 export default defineComponent({
   name: 'Library',
   components: { SvgIcon, CoverRow, TrackList, ContextMenu },
-  inject: ['restoreMainScrollPosition', 'scrollMainTo'],
+  inject: ['restoreMainScrollPosition'],
   data() {
     return {
       show: false,
@@ -654,7 +654,6 @@ export default defineComponent({
       } else if (tab === 'artists' && this.liked.artists.length === 0) {
         this.loadLibraryArtists(true);
       }
-      this.scrollMainTo({ top: 375, behavior: 'smooth' });
       this.updateLoadMoreObserver();
     },
     goToLikedSongsList() {
@@ -699,7 +698,6 @@ export default defineComponent({
     changeLibrarySongsSort(type: LibrarySongsSort) {
       this.librarySongsSort = type;
       this.currentTab = 'librarySongs';
-      window.scrollTo({ top: 375, behavior: 'smooth' });
       this.updateLoadMoreObserver();
     },
     updateLoadMoreObserver() {
@@ -795,14 +793,12 @@ h1 {
   }
 
   .icon {
-    width: 36px;
+    width: 24px;
     height: 36px;
-    flex: 0 0 36px;
+    flex: 0 0 24px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 10px;
-    background: var(--color-secondary-bg);
     color: var(--color-primary);
     margin-right: 12px;
     .svg-icon {
@@ -884,7 +880,6 @@ h1 {
     color: #f3f6ff;
   }
 
-  .icon,
   .play-btn {
     background: rgba(255, 255, 255, 0.1);
     color: var(--color-primary);

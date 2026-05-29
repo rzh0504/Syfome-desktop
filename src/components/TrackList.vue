@@ -194,6 +194,14 @@ export default defineComponent({
       } else if (this.dbclickTrackFunc === 'dailyTracks') {
         const trackIDs = this.tracks.map(t => t.id);
         this.player.replacePlaylist(trackIDs, '/daily/songs', 'url', trackID);
+      } else if (this.dbclickTrackFunc === 'todayRecommend') {
+        const trackIDs = this.tracks.map(t => t.id);
+        this.player.replacePlaylist(
+          trackIDs,
+          '/home/today-recommend',
+          'url',
+          trackID
+        );
       }
     },
     playThisListDefault(trackID: TrackId | undefined) {
